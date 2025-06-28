@@ -203,6 +203,8 @@
             margin-top: 20px;
             width: 100%;
             max-width: 800px;
+            padding: 0 10px; /* 左右に少し余白を追加 */
+            box-sizing: border-box; /* paddingを含めてwidth, heightを計算 */
         }
         .mobile-controls-row {
             display: flex;
@@ -234,8 +236,8 @@
             max-width: 180px; /* 左右ボタンは少し広め */
         }
 
-        /* 新しいスタートボタンのスタイル */
-        .start-option-button {
+        /* スタートボタンのスタイル (単一に戻す) */
+        #start-game-button { /* IDを変更 */
             padding: 20px 40px;
             font-size: 28px;
             font-weight: bold;
@@ -245,14 +247,14 @@
             border-radius: 15px;
             cursor: pointer;
             transition: background-color 0.3s, transform 0.1s;
-            margin: 10px; /* ボタン間のスペース */
+            margin-top: 20px; /* タイトルとの間隔 */
             width: 80%; /* 幅を少し広げる */
             max-width: 300px; /* 最大幅 */
         }
-        .start-option-button:hover {
+        #start-game-button:hover {
             background-color: #eee;
         }
-        .start-option-button:active {
+        #start-game-button:active {
             transform: scale(0.98);
         }
 
@@ -285,7 +287,7 @@
                 font-size: 40px;
             }
             /* スマホ時のスタートボタンの調整 */
-            .start-option-button {
+            #start-game-button { /* IDを変更 */
                 font-size: 24px;
                 padding: 15px 30px;
                 width: 95%; /* さらに幅を調整 */
@@ -300,10 +302,7 @@
         <canvas id="game-canvas"></canvas>
         <div id="start-screen" class="overlay">
             <h2>Blue Sphere Dash</h2>
-            <p>プレイモードを選択してください</p>
-            <button id="start-pc" class="start-option-button">PC版でプレイ</button>
-            <button id="start-mobile" class="start-option-button">スマホ版でプレイ</button>
-        </div>
+            <p id="start-message">エンターキーを押すか、画面をタップしてスタート</p> <button id="start-game-button" class="game-button">ゲームスタート</button> </div>
         <div id="ui-container">
             <span id="score">スコア: 0</span><br>
             <span id="lives">ライフ: 3/3</span><br>
