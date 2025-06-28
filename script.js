@@ -131,7 +131,7 @@ scoreHistoryButton.addEventListener('click', displayScores);
 closeButton.addEventListener('click', () => { scoreHistoryModal.style.display = 'none'; });
 scoreHistoryModal.addEventListener('click', (e) => { if (e.target === scoreHistoryModal) { scoreHistoryModal.style.display = 'none'; } });
 
-// スタート画面のどこかをクリック/タップでゲームスタート (ボタンは不要になったため)
+// スタート画面のどこかをクリック/タップでゲームスタート
 startScreen.addEventListener('click', (e) => {
     // ターゲットがモーダル内要素でない場合のみ処理 (スコア履歴モーダルとの干渉防止)
     if (!gameActive && !scoreHistoryModal.contains(e.target)) {
@@ -178,3 +178,143 @@ function resizeGame() {
     if (mobileControlsInfoElement) { // 要素が存在する場合のみ処理
         if (window.innerWidth <= 820) {
             desktopControlsInfo.style.display = 'none';
+            desktopJumpInfo.style.display = 'none';
+            desktopAttackInfo.style.display = 'none';
+            mobileControlsInfoElement.style.display = 'block';
+        } else {
+            desktopControlsInfo.style.display = 'list-item';
+            desktopJumpInfo.style.display = 'list-item';
+            desktopAttackInfo.style.display = 'list-item';
+            mobileControlsInfoElement.style.display = 'none';
+        }
+    }
+}
+
+window.addEventListener('resize', resizeGame);
+resizeGame(); // 初回ロード時にも実行
+
+// startGame関数はモード選択なしで直接ゲームを開始する
+function startGame() {
+    gameActive = true;
+    startScreen.style.display = 'none';
+    gameOverScreen.style.display = 'none';
+    init(); // ゲーム初期化
+    if (!gameLoop.isRunning) {
+        gameLoop();
+    }
+}
+
+// --- ゲーム初期化 ---
+function init() {
+    player = createPlayer();
+    enemies = []; playerBullets = []; enemyBullets = [];
+    defenseItem = createItem('defense'); attackItem = createItem('attack'); recoveryItem = createItem('recovery');
+    backgroundObjects = [];
+    score = 0; lives = INITIAL_LIVES; timeLeft = GAME_DURATION; isGameOver = false;
+    worldOffsetX = player.x - (CANVAS_WIDTH / 2); // worldOffsetXも固定のCanvas幅に基づいて計算
+
+    for (var i = 0; i < 30; i++) { 
+        backgroundObjects.push({ 
+            x: i * (Math.random() * 150 + 250), // 固定値で調整
+            trunkWidth: 20,
+            trunkHeight: 40,
+            leafWidth: 80,
+            leafHeight: 80
+        }); 
+    }
+    
+    updateUI();
+    uiContainer.style.display = 'block';
+
+    clearInterval(gameTimer); clearTimeout(groundEnemySpawnTimer); clearTimeout(flyingEnemySpawnTimer); clearTimeout(defenseItemSpawnTimer); clearTimeout(attackItemSpawnTimer); clearTimeout(recoveryItemSpawnTimer);
+
+    gameTimer = setInterval(() => { if(isGameOver) return; timeLeft--; if (timeLeft <= 0) { timeLeft = 0; endGame("ゲームクリア"); } updateUI(); }, 1000);
+    
+    function scheduleNextGroundEnemy() { if (isGameOver) return; spawnEnemy('ground'); groundEnemySpawnTimer = setTimeout(scheduleNextGroundEnemy, 2000 + Math.random() * 2000); }
+    function scheduleNextFlyingEnemy() { if (isGameOver) return; spawnEnemy('flying'); flyingEnemySpawnTimer = setTimeout(scheduleNextFlyingEnemy, 3000 + Math.random() * 3000); }
+    scheduleNextGroundEnemy(); scheduleNextFlyingEnemy();
+    
+    defenseItemSpawnTimer = setTimeout(() => scheduleNextItem(defenseItem), 10000);
+    attackItemSpawnTimer = setTimeout(() => scheduleNextItem(attackItem), 15000);
+}
+
+// --- アイテム & 敵の出現制御 ---
+function scheduleNextItem(item) { if (isGameOver) return; spawnItem(item); }
+function spawnItem(item) {
+    if (isGameOver || item.isActive) return;
+    if (item.type === 'defense' && player.hasShield) return;
+    if (item.type === 'attack' && player.hasAttack) return;
+    if (item.type === 'recovery' && lives > 2) return;
+    item.isActive = true; item.lifeTimer = ITEM_LIFESPAN;
+    item.x = player.x + 100 + Math.random() * (CANVAS_WIDTH / 2); // CANVAS_WIDTH 基準
+    item.y = ground.y - item.height - (Math.random() * 80 + 50); // 固定値で調整
+}
+function spawnEnemy(type) { if (isGameOver) return; var currentEnemies = enemies.filter(e => e.type === type); var maxEnemies = type === 'ground' ? MAX_GROUND_ENEMIES : MAX_FLYING_ENEMIES; if (currentEnemies.length < maxEnemies) { enemies.push(createEnemy(type)); } }
+
+function updateUI() {
+    scoreEl.textContent = `スコア: ${score}`;
+    livesEl.textContent = `ライフ: ${lives} / ${INITIAL_LIVES}`;
+    timerEl.textContent = `残り時間: ${timeLeft}`;
+}
+function endGame(message) {
+    isGameOver = true;
+    gameActive = false;
+    clearTimeout(groundEnemySpawnTimer); clearTimeout(flyingEnemySpawnTimer); clearTimeout(defenseItemSpawnTimer); clearTimeout(attackItemSpawnTimer); clearTimeout(recoveryItemSpawnTimer); clearInterval(gameTimer);
+    gameOverTitleEl.textContent = message; finalScoreEl.textContent = `最終スコア: ${score}`;
+    saveScore(score);
+    gameOverScreen.style.display = 'flex';
+    uiContainer.style.display = 'none';
+}
+
+// --- スコア保存・表示関数 ---
+function saveScore(scoreToSave) {
+    var scores = JSON.parse(localStorage.getItem(SCORES_KEY)) || [];
+    var newEntry = { score: scoreToSave, date: new Date().toLocaleString('ja-JP') };
+    scores.unshift(newEntry);
+    scores = scores.slice(0, 10);
+    localStorage.setItem(SCORES_KEY, JSON.stringify(scores));
+}
+
+function displayScores() {
+    var scores = JSON.parse(localStorage.getItem(SCORES_KEY)) || [];
+    scoreList.innerHTML = '';
+    if (scores.length === 0) {
+        scoreList.innerHTML = '<li>まだプレイ履歴がありません。</li>';
+    } else {
+        scores.forEach(entry => {
+            var li = document.createElement('li');
+            li.innerHTML = `<strong>${entry.score}点</strong> <small>${entry.date}</small>`;
+            scoreList.appendChild(li);
+        });
+    }
+    scoreHistoryModal.style.display = 'flex';
+}
+
+// --- 描画関数 ---
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    
+    ctx.translate(-worldOffsetX, 0); 
+
+    backgroundObjects.forEach(obj => {
+        ctx.fillStyle = '#8B4513'; ctx.fillRect(obj.x, ground.y - obj.trunkHeight, obj.trunkWidth, obj.trunkHeight);
+        ctx.fillStyle = '#228B22'; ctx.beginPath();
+        var treeTopX = obj.x + (obj.trunkWidth / 2); var treeTopY = ground.y - obj.trunkHeight - obj.leafHeight;
+        ctx.moveTo(treeTopX, treeTopY); ctx.lineTo(treeTopX - obj.leafWidth / 2, ground.y - obj.trunkHeight); ctx.lineTo(treeTopX + obj.leafWidth / 2, ground.y - obj.trunkHeight); ctx.closePath(); ctx.fill();
+    });
+    
+    ctx.fillStyle = ground.color;
+    ctx.fillRect(0, ground.y, CANVAS_WIDTH * 100, CANVAS_HEIGHT - ground.y);
+    
+    ctx.fillStyle = '#C2B280'; ctx.fillRect(-10, 0, 10, CANVAS_HEIGHT);
+
+    var shouldDrawPlayer = !(player.isInvincible && Math.floor(player.invincibilityTimer / 10) % 2 === 0);
+    if (shouldDrawPlayer) {
+        ctx.fillStyle = player.color; ctx.beginPath(); ctx.arc(player.x + player.radius, player.y + player.radius, player.radius, 0, Math.PI * 2); ctx.fill();
+        if (player.hasShield) { ctx.strokeStyle = 'black'; ctx.lineWidth = 3; ctx.stroke(); }
+        if (player.isHealing && Math.floor(player.healingTimer / 10) % 2 !== 0) { ctx.fillStyle = '#32CD32'; ctx.beginPath(); ctx.arc(player.x + player.radius, player.y + player.radius, 6, 0, Math.PI * 2); ctx.fill(); }
+        if (player.hasAttack) { ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(player.x + player.radius, player.y + player.radius, 5, 0, Math.PI * 2); ctx.fill(); }
+    }
+
+    [defenseItem, attackItem, recoveryItem].forEach(item => { if (item.isActive) { ctx.fillStyle = item.color; ctx.beginPath(); ctx.moveTo(item.x + item.width / 2, item.y); ctx.lineTo(item.x, item.y + item.height); ctx.lineTo(item.x + item.width, item.y + item.height); ctx.closePath(); ctx.fill(); } });
