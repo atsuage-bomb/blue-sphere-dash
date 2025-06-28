@@ -31,13 +31,23 @@ const mobileControlsInfo = document.getElementById('mobile-controls-info');
 // canvasの元のサイズを定数として保持
 const ORIGINAL_CANVAS_WIDTH = 800;
 const ORIGINAL_CANVAS_HEIGHT = 400;
+// canvas要素のwidth/height属性は変更せず、CSSでサイズを制御します
 canvas.width = ORIGINAL_CANVAS_WIDTH;
 canvas.height = ORIGINAL_CANVAS_HEIGHT;
 
 // --- ゲームの定数 ---
-const GRAVITY = 0.5; const JUMP_FORCE = 12; const PLAYER_SPEED = 5; const BULLET_SPEED = 10; const ENEMY_BULLET_SPEED = 5;
-const MAX_GROUND_ENEMIES = 3; const MAX_FLYING_ENEMIES = 2; const INITIAL_LIVES = 3; const GAME_DURATION = 60;
-const INVINCIBILITY_DURATION = 120; const ITEM_LIFESPAN = 300; const HEALING_EFFECT_DURATION = 120;
+const GRAVITY = 0.5;
+const JUMP_FORCE = 12;
+const PLAYER_SPEED = 5;
+const BULLET_SPEED = 10;
+const ENEMY_BULLET_SPEED = 5;
+const MAX_GROUND_ENEMIES = 3;
+const MAX_FLYING_ENEMIES = 2;
+const INITIAL_LIVES = 3;
+const GAME_DURATION = 60;
+const INVINCIBILITY_DURATION = 120;
+const ITEM_LIFESPAN = 300;
+const HEALING_EFFECT_DURATION = 120;
 const SCORES_KEY = 'blueSphereDashScores';
 
 // --- ゲームの状態変数 ---
@@ -47,14 +57,43 @@ let worldOffsetX, keys, isGameOver, gameActive = false;
 let backgroundObjects;
 let scaleFactor = 1; // スケーリングファクターを追加
 
-// --- オブジェクト生成関数 ---
-function createPlayer() { return { x: canvas.width / 2 / scaleFactor, y: 300 / scaleFactor, width: 30 / scaleFactor, height: 30 / scaleFactor, radius: 15 / scaleFactor, dx: 0, dy: 0, onGround: false, color: '#007BFF', isInvincible: false, invincibilityTimer: 0, hasShield: false, hasAttack: false, isHealing: false, healingTimer: 0 }; }
-function createEnemy(type) { return { type: type, x: worldOffsetX / scaleFactor + canvas.width / scaleFactor + Math.random() * 200 / scaleFactor, y: type === 'ground' ? ground.y / scaleFactor - 30 / scaleFactor : Math.random() * (ground.y / scaleFactor - 200 / scaleFactor) + 50 / scaleFactor, width: 30 / scaleFactor, height: 30 / scaleFactor, color: type === 'ground' ? '#DC3545' : 'black', speed: type === 'ground' ? 3 / scaleFactor : (Math.random() * 2 + 1) / scaleFactor, shootCooldown: 120 }; }
-function createItem(type) { return { type: type, x: 0, y: 0, width: 30 / scaleFactor, height: 30 / scaleFactor, color: type === 'defense' ? '#8A2BE2' : (type === 'attack' ? '#FFD700' : '#32CD32'), isActive: false, lifeTimer: 0 }; }
-function createPlayerBullet() { playerBullets.push({ x: player.x + player.radius, y: player.y + player.radius, width: 25 / scaleFactor, height: 5 / scaleFactor, color: 'white' }); }
-function createEnemyBullet(enemy) { const angle = Math.atan2((player.y + player.radius) - (enemy.y + enemy.height / 2), (player.x + player.radius) - (enemy.x + enemy.width / 2)); enemyBullets.push({ x: enemy.x, y: enemy.y + enemy.height / 2, radius: 5 / scaleFactor, color: 'red', dx: Math.cos(angle) * ENEMY_BULLET_SPEED / scaleFactor, dy: Math.sin(angle) * ENEMY_BULLET_SPEED / scaleFactor }); }
+// 地面のY座標をORIGINAL_CANVAS_HEIGHT基準で定義
+const ground = { y: ORIGINAL_CANVAS_HEIGHT - 40, color: '#28A745' };
 
-const ground = { y: ORIGINAL_CANVAS_HEIGHT - 40, color: '#28A745' }; // 地面のY座標はオリジナルの高さで保持
+// --- オブジェクト生成関数 ---
+// 各オブジェクトの物理的なプロパティ（位置、サイズ、速度など）をscaleFactorで調整
+function createPlayer() { return { 
+    x: ORIGINAL_CANVAS_WIDTH / 2, // 初期X座標は元サイズ基準
+    y: ground.y - 30, // 初期Y座標は地面基準
+    width: 30, height: 30, radius: 15, // サイズは元サイズ基準
+    dx: 0, dy: 0, onGround: false, color: '#007BFF', isInvincible: false, invincibilityTimer: 0, hasShield: false, hasAttack: false, isHealing: false, healingTimer: 0 
+}; }
+function createEnemy(type) { return { 
+    type: type, 
+    x: worldOffsetX + ORIGINAL_CANVAS_WIDTH + Math.random() * 200, // X座標はworldOffsetXと元サイズ基準
+    y: type === 'ground' ? ground.y - 30 : Math.random() * (ground.y - 200) + 50, // Y座標は地面基準で元サイズ
+    width: 30, height: 30, color: type === 'ground' ? '#DC3545' : 'black', 
+    speed: type === 'ground' ? 3 : Math.random() * 2 + 1, // 速度は元サイズ基準
+    shootCooldown: 120 
+}; }
+function createItem(type) { return { 
+    type: type, x: 0, y: 0, 
+    width: 30, height: 30, // サイズは元サイズ基準
+    color: type === 'defense' ? '#8A2BE2' : (type === 'attack' ? '#FFD700' : '#32CD32'), isActive: false, lifeTimer: 0 
+}; }
+function createPlayerBullet() { playerBullets.push({ 
+    x: player.x + player.radius, y: player.y + player.radius, 
+    width: 25, height: 5, color: 'white' // サイズは元サイズ基準
+}); }
+function createEnemyBullet(enemy) { 
+    const angle = Math.atan2((player.y + player.radius) - (enemy.y + enemy.height / 2), (player.x + player.radius) - (enemy.x + enemy.width / 2)); 
+    enemyBullets.push({ 
+        x: enemy.x, y: enemy.y + enemy.height / 2, 
+        radius: 5, color: 'red', // サイズは元サイズ基準
+        dx: Math.cos(angle) * ENEMY_BULLET_SPEED, dy: Math.sin(angle) * ENEMY_BULLET_SPEED // 速度は元サイズ基準
+    }); 
+}
+
 keys = { ArrowRight: false, ArrowLeft: false, Space: false, KeyA: false };
 
 // --- イベントリスナー ---
@@ -102,13 +141,13 @@ function resizeGame() {
     // コンテナの現在の幅に基づいてスケールを計算
     const gameContainer = document.getElementById('game-container');
     const containerWidth = gameContainer.clientWidth;
+    // スケールファクターは、元のCanvas幅と現在のコンテナ幅の比率
     scaleFactor = containerWidth / ORIGINAL_CANVAS_WIDTH;
 
+    // canvas要素の属性は元のサイズを維持
     canvas.width = ORIGINAL_CANVAS_WIDTH;
     canvas.height = ORIGINAL_CANVAS_HEIGHT;
 
-    // CSSでサイズを調整するため、canvasの属性サイズは固定のまま
-    // ctx.scale() を使って描画を調整
     initialDraw(); // スケール変更後に初期描画を呼び出す
     
     // モバイルデバイスでの操作説明の表示/非表示を切り替え
@@ -144,7 +183,7 @@ function init() {
     defenseItem = createItem('defense'); attackItem = createItem('attack'); recoveryItem = createItem('recovery');
     backgroundObjects = [];
     score = 0; lives = INITIAL_LIVES; timeLeft = GAME_DURATION; isGameOver = false;
-    worldOffsetX = player.x - (canvas.width / 2); // 既にスケールが適用されているcreatePlayer()の値を使う
+    worldOffsetX = player.x - (ORIGINAL_CANVAS_WIDTH / 2); // worldOffsetXも元サイズ基準で計算
 
     for (let i = 0; i < 30; i++) { backgroundObjects.push({ x: i * (Math.random() * 150 + 250), trunkWidth: 20, trunkHeight: 40, leafWidth: 80, leafHeight: 80 }); }
     
@@ -172,7 +211,10 @@ function spawnItem(item) {
     if (item.type === 'defense' && player.hasShield) return;
     if (item.type === 'attack' && player.hasAttack) return;
     if (item.type === 'recovery' && lives > 2) return;
-    item.isActive = true; item.lifeTimer = ITEM_LIFESPAN; item.x = player.x + (100 + Math.random() * (canvas.width / 2)) / scaleFactor; item.y = ground.y / scaleFactor - item.height - (Math.random() * 80 + 50) / scaleFactor;
+    item.isActive = true; item.lifeTimer = ITEM_LIFESPAN;
+    // アイテムの出現位置も元の座標系で計算
+    item.x = player.x + 100 + Math.random() * (ORIGINAL_CANVAS_WIDTH / 2);
+    item.y = ground.y - item.height - (Math.random() * 80 + 50);
 }
 function spawnEnemy(type) { if (isGameOver) return; const currentEnemies = enemies.filter(e => e.type === type); const maxEnemies = type === 'ground' ? MAX_GROUND_ENEMIES : MAX_FLYING_ENEMIES; if (currentEnemies.length < maxEnemies) { enemies.push(createEnemy(type)); } }
 
@@ -219,17 +261,19 @@ function displayScores() {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
-    ctx.scale(scaleFactor, scaleFactor); // ここで描画全体をスケール
-
+    // ここで描画全体をスケール
+    // translateもscaleを適用する前にすることで、ワールド座標系が正しく動く
     ctx.translate(-worldOffsetX, 0);
+    ctx.scale(scaleFactor, scaleFactor); 
 
     backgroundObjects.forEach(obj => { ctx.fillStyle = '#8B4513'; ctx.fillRect(obj.x, ground.y - obj.trunkHeight, obj.trunkWidth, obj.trunkHeight); ctx.fillStyle = '#228B22'; ctx.beginPath(); const treeTopX = obj.x + (obj.trunkWidth / 2); const treeTopY = ground.y - obj.trunkHeight - obj.leafHeight; ctx.moveTo(treeTopX, treeTopY); ctx.lineTo(treeTopX - obj.leafWidth / 2, ground.y - obj.trunkHeight); ctx.lineTo(treeTopX + obj.leafWidth / 2, ground.y - obj.trunkHeight); ctx.closePath(); ctx.fill(); });
-    ctx.fillStyle = ground.color; ctx.fillRect(0, ground.y, canvas.width * 100, canvas.height - ground.y); ctx.fillStyle = '#C2B280'; ctx.fillRect(-10, 0, 10, canvas.height);
+    ctx.fillStyle = ground.color; ctx.fillRect(0, ground.y, ORIGINAL_CANVAS_WIDTH * 100, ORIGINAL_CANVAS_HEIGHT - ground.y); // 地面はOriginalのサイズで描画
+    ctx.fillStyle = '#C2B280'; ctx.fillRect(-10, 0, 10, ORIGINAL_CANVAS_HEIGHT); // 壁もOriginalのサイズで描画
 
     let shouldDrawPlayer = !(player.isInvincible && Math.floor(player.invincibilityTimer / 10) % 2 === 0);
     if (shouldDrawPlayer) {
         ctx.fillStyle = player.color; ctx.beginPath(); ctx.arc(player.x + player.radius, player.y + player.radius, player.radius, 0, Math.PI * 2); ctx.fill();
-        if (player.hasShield) { ctx.strokeStyle = 'black'; ctx.lineWidth = 3; ctx.stroke(); }
+        if (player.hasShield) { ctx.strokeStyle = 'black'; ctx.lineWidth = 3 / scaleFactor; ctx.stroke(); } // 線幅もスケール
         if (player.isHealing && Math.floor(player.healingTimer / 10) % 2 !== 0) { ctx.fillStyle = '#32CD32'; ctx.beginPath(); ctx.arc(player.x + player.radius, player.y + player.radius, 6, 0, Math.PI * 2); ctx.fill(); }
         if (player.hasAttack) { ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(player.x + player.radius, player.y + player.radius, 5, 0, Math.PI * 2); ctx.fill(); }
     }
@@ -273,7 +317,7 @@ function update() {
     if (player.isHealing) { if (--player.healingTimer <= 0) player.isHealing = false; }
 
     [defenseItem, attackItem, recoveryItem].forEach(item => { if (item.isActive) { if (--item.lifeTimer <= 0) { item.isActive = false; const nextTimer = setTimeout(() => scheduleNextItem(item), 5000 + Math.random() * 5000); if (item.type === 'defense') defenseItemSpawnTimer = nextTimer; else if (item.type === 'attack') attackItemSpawnTimer = nextTimer; else recoveryItemSpawnTimer = nextTimer; }
-        // 衝突判定はスケールを考慮した値で比較
+        // 衝突判定は元の座標系で行う
         if (player.x < item.x + item.width && player.x + player.width > item.x && player.y < item.y + item.height && player.y + player.height > item.y) {
             if (item.type === 'defense') player.hasShield = true;
             if (item.type === 'attack') player.hasAttack = true;
@@ -284,38 +328,40 @@ function update() {
 
     if (keys.KeyA && player.hasAttack) { createPlayerBullet(); keys.KeyA = false; }
     
-    for (let i = playerBullets.length - 1; i >= 0; i--) { playerBullets[i].x += BULLET_SPEED / scaleFactor; if (playerBullets[i].x > worldOffsetX / scaleFactor + canvas.width / scaleFactor) playerBullets.splice(i, 1); }
-    for (let i = enemyBullets.length - 1; i >= 0; i--) { const bullet = enemyBullets[i]; bullet.x += bullet.dx; bullet.y += bullet.dy; if (bullet.x < worldOffsetX / scaleFactor - bullet.radius || bullet.x > worldOffsetX / scaleFactor + canvas.width / scaleFactor + bullet.radius || bullet.y < -bullet.radius || bullet.y > canvas.height / scaleFactor + bullet.radius) { enemyBullets.splice(i, 1); } }
+    // 移動速度は元の定数を使用
+    for (let i = playerBullets.length - 1; i >= 0; i--) { playerBullets[i].x += BULLET_SPEED; if (playerBullets[i].x > worldOffsetX + ORIGINAL_CANVAS_WIDTH) playerBullets.splice(i, 1); }
+    for (let i = enemyBullets.length - 1; i >= 0; i--) { const bullet = enemyBullets[i]; bullet.x += bullet.dx; bullet.y += bullet.dy; if (bullet.x < worldOffsetX - bullet.radius || bullet.x > worldOffsetX + ORIGINAL_CANVAS_WIDTH + bullet.radius || bullet.y < -bullet.radius || bullet.y > ORIGINAL_CANVAS_HEIGHT + bullet.radius) { enemyBullets.splice(i, 1); } }
 
-    if (player.onGround) { if (keys.ArrowRight) player.dx = PLAYER_SPEED / scaleFactor; else if (keys.ArrowLeft) player.dx = -PLAYER_SPEED / scaleFactor; else player.dx = 0; } else { if (keys.ArrowRight) player.dx = PLAYER_SPEED / scaleFactor; else if (keys.ArrowLeft) player.dx = -PLAYER_SPEED / scaleFactor; }
-    if (keys.Space && player.onGround) { player.dy = -JUMP_FORCE / scaleFactor; player.onGround = false; }
-    player.x += player.dx; player.dy += GRAVITY / scaleFactor; player.y += player.dy; player.onGround = false;
+    if (player.onGround) { if (keys.ArrowRight) player.dx = PLAYER_SPEED; else if (keys.ArrowLeft) player.dx = -PLAYER_SPEED; else player.dx = 0; } else { if (keys.ArrowRight) player.dx = PLAYER_SPEED; else if (keys.ArrowLeft) player.dx = -PLAYER_SPEED; }
+    if (keys.Space && player.onGround) { player.dy = -JUMP_FORCE; player.onGround = false; }
+    player.x += player.dx; player.dy += GRAVITY; player.y += player.dy; player.onGround = false;
     if (player.x < 0) player.x = 0;
-    if (player.y + player.height >= ground.y / scaleFactor) { player.y = ground.y / scaleFactor - player.height; player.dy = 0; player.onGround = true; }
+    if (player.y + player.height >= ground.y) { player.y = ground.y - player.height; player.dy = 0; player.onGround = true; }
     
-    // worldOffsetX も scaleFactor で調整
-    const deadZoneLeft = worldOffsetX / scaleFactor + (canvas.width / scaleFactor) * 0.4;
-    const deadZoneRight = worldOffsetX / scaleFactor + (canvas.width / scaleFactor) * 0.6;
-    if (player.x < deadZoneLeft) worldOffsetX = player.x * scaleFactor - ORIGINAL_CANVAS_WIDTH * 0.4;
-    else if (player.x > deadZoneRight) worldOffsetX = player.x * scaleFactor - ORIGINAL_CANVAS_WIDTH * 0.6;
+    // worldOffsetX の計算は元のCanvasサイズ基準
+    const deadZoneLeft = worldOffsetX + ORIGINAL_CANVAS_WIDTH * 0.4;
+    const deadZoneRight = worldOffsetX + ORIGINAL_CANVAS_WIDTH * 0.6;
+    if (player.x < deadZoneLeft) worldOffsetX = player.x - ORIGINAL_CANVAS_WIDTH * 0.4;
+    else if (player.x > deadZoneRight) worldOffsetX = player.x - ORIGINAL_CANVAS_WIDTH * 0.6;
     if (worldOffsetX < 0) worldOffsetX = 0;
 
 
     // --- 衝突判定 ---
+    // オブジェクトの物理的なプロパティ（位置、サイズ）は元のサイズで管理されているので、scaleFactorなしで衝突判定を行う
     for (let i = playerBullets.length - 1; i >= 0; i--) { for (let j = enemies.length - 1; j >= 0; j--) { const bullet = playerBullets[i]; const enemy = enemies[j]; if (bullet && enemy && bullet.x < enemy.x + enemy.width && bullet.x + bullet.width > enemy.x && bullet.y < enemy.y + enemy.height && bullet.y + bullet.height > enemy.y) { score += (enemy.type === 'ground') ? 1 : 2; enemies.splice(j, 1); playerBullets.splice(i, 1); updateUI(); break; } } }
     for (let i = enemyBullets.length - 1; i >= 0; i--) { const bullet = enemyBullets[i]; const dx = (player.x + player.radius) - bullet.x; const dy = (player.y + player.radius) - bullet.y; const distance = Math.sqrt(dx * dx + dy * dy); if (distance < player.radius + bullet.radius) { handlePlayerDamage(); enemyBullets.splice(i, 1); } }
     
     enemies.forEach((enemy, index) => {
         enemy.x -= enemy.speed;
-        if (enemy.type === 'flying') { enemy.shootCooldown--; if (enemy.shootCooldown <= 0 && player.x < enemy.x && Math.abs(player.x - enemy.x) < (canvas.width / scaleFactor) * 0.8) { createEnemyBullet(enemy); enemy.shootCooldown = 120; } }
+        if (enemy.type === 'flying') { enemy.shootCooldown--; if (enemy.shootCooldown <= 0 && player.x < enemy.x && Math.abs(player.x - enemy.x) < ORIGINAL_CANVAS_WIDTH * 0.8) { createEnemyBullet(enemy); enemy.shootCooldown = 120; } }
         
-        // 敵とプレイヤーの衝突判定もスケールを考慮
+        // 敵とプレイヤーの衝突判定
         if ( player.x < enemy.x + enemy.width && player.x + player.width > enemy.x && player.y < enemy.y + enemy.height && player.y + player.height > enemy.y ) {
-            if (player.dy > 0 && (player.y + player.height) < (enemy.y + 20 / scaleFactor)) { // 踏みつけ判定
-                score += (enemy.type === 'ground') ? 1 : 2; enemies.splice(index, 1); player.dy = -6 / scaleFactor; updateUI();
+            if (player.dy > 0 && (player.y + player.height) < (enemy.y + 20)) { // 踏みつけ判定
+                score += (enemy.type === 'ground') ? 1 : 2; enemies.splice(index, 1); player.dy = -6; updateUI();
             } else { handlePlayerDamage(); }
         }
-        if (enemy.x + enemy.width < worldOffsetX / scaleFactor - (canvas.width / scaleFactor)) { enemies.splice(index, 1); }
+        if (enemy.x + enemy.width < worldOffsetX - ORIGINAL_CANVAS_WIDTH) { enemies.splice(index, 1); }
     });
 }
 
@@ -336,7 +382,7 @@ function initialDraw() {
     ctx.save();
     ctx.scale(scaleFactor, scaleFactor); // 初期描画にもスケールを適用
     ctx.fillStyle = ground.color;
-    ctx.fillRect(0, ground.y, canvas.width, canvas.height - ground.y);
+    ctx.fillRect(0, ground.y, ORIGINAL_CANVAS_WIDTH, ORIGINAL_CANVAS_HEIGHT - ground.y);
     ctx.restore();
 }
 initialDraw();
