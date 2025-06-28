@@ -194,15 +194,23 @@
 
         /* --- モバイル対応スタイル --- */
         #mobile-controls {
-            display: none;
-            justify-content: center;
-            gap: 15px;
+            display: none; /* Default hidden, shown by media query */
+            flex-direction: column; /* ボタンを縦に並べる */
+            align-items: center; /* 中央揃え */
+            gap: 10px; /* 行間のスペース */
             margin-top: 20px;
-            flex-wrap: wrap;
             width: 100%;
             max-width: 800px;
         }
+        .mobile-controls-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px; /* ボタン間のスペース */
+            width: 100%; /* 親要素の幅いっぱいに広げる */
+        }
         .mobile-button {
+            flex-grow: 1; /* ボタンが使用可能なスペースを均等に占める */
+            max-width: 150px; /* 各ボタンの最大幅を設定し、大きくなりすぎないようにする */
             padding: 15px 25px;
             font-size: 18px;
             font-weight: bold;
@@ -218,6 +226,10 @@
         .mobile-button:active {
             background-color: #ddd;
             transform: scale(0.95);
+        }
+        /* ← → ボタンを少し大きくして操作しやすくする */
+        #left-button, #right-button {
+            max-width: 180px; /* 左右ボタンは少し広め */
         }
 
         @media (max-width: 820px) {
@@ -273,10 +285,14 @@
     </div>
 
     <div id="mobile-controls">
-        <button id="jump-button" class="mobile-button">ジャンプ</button>
-        <button id="left-button" class="mobile-button">← 移動</button>
-        <button id="right-button" class="mobile-button">→ 移動</button>
-        <button id="attack-button" class="mobile-button">攻撃</button>
+        <div class="mobile-controls-row">
+            <button id="left-button" class="mobile-button">← 移動</button>
+            <button id="right-button" class="mobile-button">→ 移動</button>
+        </div>
+        <div class="mobile-controls-row">
+            <button id="jump-button" class="mobile-button">ジャンプ</button>
+            <button id="attack-button" class="mobile-button">攻撃</button>
+        </div>
     </div>
 
     <div id="game-description">
