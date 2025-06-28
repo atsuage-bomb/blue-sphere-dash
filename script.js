@@ -318,3 +318,114 @@ function draw() {
     }
 
     [defenseItem, attackItem, recoveryItem].forEach(item => { if (item.isActive) { ctx.fillStyle = item.color; ctx.beginPath(); ctx.moveTo(item.x + item.width / 2, item.y); ctx.lineTo(item.x, item.y + item.height); ctx.lineTo(item.x + item.width, item.y + item.height); ctx.closePath(); ctx.fill(); } });
+    playerBullets.forEach(bullet => { ctx.fillStyle = bullet.color; ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height); });
+    enemyBullets.forEach(bullet => { ctx.fillStyle = bullet.color; ctx.beginPath(); ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2); ctx.fill(); });
+    enemies.forEach(enemy => { ctx.fillStyle = enemy.color; ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height); });
+    
+    ctx.restore();
+}
+
+function handlePlayerDamage() {
+    if (player.isInvincible) return;
+
+    if (player.hasShield) {
+        player.hasShield = false;
+        defenseItemSpawnTimer = setTimeout(() => scheduleNextItem(defenseItem), 10000 + Math.random() * 5000);
+    } else {
+        lives--;
+        if (player.hasAttack) {
+            player.hasAttack = false;
+            attackItemSpawnTimer = setTimeout(() => scheduleNextItem(attackItem), 10000 + Math.random() * 5000);
+        }
+        if (lives <= 2 && !recoveryItem.isActive) {
+            clearTimeout(recoveryItemSpawnTimer);
+            recoveryItemSpawnTimer = setTimeout(() => scheduleNextItem(recoveryItem), 3000);
+        }
+        if (lives <= 0) { lives = 0; endGame("ゲームオーバー"); }
+    }
+    player.isInvincible = true;
+    player.invincibilityTimer = INVINCIBILITY_DURATION;
+    updateUI();
+}
+
+// --- 更新関数 ---
+function update() {
+    if (isGameOver) return;
+    
+    if (player.isInvincible) { if (--player.invincibilityTimer <= 0) player.isInvincible = false; }
+    if (player.isHealing) { if (--player.healingTimer <= 0) player.isHealing = false; }
+
+    var items = [defenseItem, attackItem, recoveryItem];
+    items.forEach(item => {
+        if (item.isActive) {
+            item.lifeTimer--;
+            if (item.lifeTimer <= 0) {
+                item.isActive = false;
+                var nextTimer = setTimeout(() => scheduleNextItem(item), 5000 + Math.random() * 5000);
+                if (item.type === 'defense') defenseItemSpawnTimer = nextTimer;
+                else if (item.type === 'attack') attackItemSpawnTimer = nextTimer;
+                else recoveryItemSpawnTimer = nextTimer;
+            }
+            if (player.x < item.x + item.width &&
+                player.x + player.width > item.x &&
+                player.y < item.y + item.height &&
+                player.y + player.height > item.y) {
+                if (item.type === 'defense') player.hasShield = true;
+                if (item.type === 'attack') player.hasAttack = true;
+                if (item.type === 'recovery') { if (lives < INITIAL_LIVES) lives++; player.isHealing = true; player.healingTimer = HEALING_EFFECT_DURATION; updateUI(); }
+                item.isActive = false;
+            }
+        }
+    });
+
+    if (keys.KeyA && player.hasAttack) { createPlayerBullet(); keys.KeyA = false; }
+    
+    for (var i = playerBullets.length - 1; i >= 0; i--) { playerBullets[i].x += BULLET_SPEED; if (playerBullets[i].x > worldOffsetX + CANVAS_WIDTH) playerBullets.splice(i, 1); }
+    for (var i = enemyBullets.length - 1; i >= 0; i--) { var bullet = enemyBullets[i]; bullet.x += bullet.dx; bullet.y += bullet.dy; if (bullet.x < worldOffsetX - bullet.radius || bullet.x > worldOffsetX + CANVAS_WIDTH + bullet.radius || bullet.y < -bullet.radius || bullet.y > CANVAS_HEIGHT + bullet.radius) { enemyBullets.splice(i, 1); } }
+
+    if (player.onGround) { if (keys.ArrowRight) player.dx = PLAYER_SPEED; else if (keys.ArrowLeft) player.dx = -PLAYER_SPEED; else player.dx = 0; } else { if (keys.ArrowRight) player.dx = PLAYER_SPEED; else if (keys.ArrowLeft) player.dx = -PLAYER_SPEED; }
+    if (keys.Space && player.onGround) { player.dy = -JUMP_FORCE; player.onGround = false; }
+    player.x += player.dx; player.dy += GRAVITY; player.y += player.dy; player.onGround = false;
+    if (player.x < 0) player.x = 0;
+    if (player.y + player.height >= ground.y) { player.y = ground.y - player.height; player.dy = 0; player.onGround = true; }
+    
+    var deadZoneLeft = worldOffsetX + CANVAS_WIDTH * 0.4;
+    var deadZoneRight = worldOffsetX + CANVAS_WIDTH * 0.6;
+    if (player.x < deadZoneLeft) worldOffsetX = player.x - CANVAS_WIDTH * 0.4;
+    else if (player.x > deadZoneRight) worldOffsetX = player.x - CANVAS_WIDTH * 0.6;
+    if (worldOffsetX < 0) worldOffsetX = 0;
+
+    for (var i = playerBullets.length - 1; i >= 0; i--) { for (var j = enemies.length - 1; j >= 0; j--) { var bullet = playerBullets[i]; var enemy = enemies[j]; if (bullet && enemy && bullet.x < enemy.x + enemy.width && bullet.x + bullet.width > enemy.x && bullet.y < enemy.y + enemy.height && bullet.y + bullet.height > enemy.y) { score += (enemy.type === 'ground') ? 1 : 2; enemies.splice(j, 1); playerBullets.splice(i, 1); updateUI(); break; } } }
+    for (var i = enemyBullets.length - 1; i >= 0; i--) { var bullet = enemyBullets[i]; var dx = (player.x + player.radius) - bullet.x; var dy = (player.y + player.radius) - bullet.y; var distance = Math.sqrt(dx * dx + dy * dy); if (distance < player.radius + bullet.radius) { handlePlayerDamage(); enemyBullets.splice(i, 1); } }
+    
+    enemies.forEach((enemy, index) => {
+        enemy.x -= enemy.speed;
+        if (enemy.type === 'flying') { enemy.shootCooldown--; if (enemy.shootCooldown <= 0 && player.x < enemy.x && Math.abs(player.x - enemy.x) < CANVAS_WIDTH * 0.8) { createEnemyBullet(enemy); enemy.shootCooldown = 120; } }
+        
+        if ( player.x < enemy.x + enemy.width && player.x + player.width > enemy.x && player.y < enemy.y + enemy.height && player.y + player.height > enemy.y ) {
+            if (player.dy > 0 && (player.y + player.height) < (enemy.y + 20)) { // 踏みつけ判定は固定
+                score += (enemy.type === 'ground') ? 1 : 2; enemies.splice(index, 1); player.dy = -6; updateUI(); // ジャンプ力も固定
+            } else { handlePlayerDamage(); }
+        }
+        if (enemy.x + enemy.width < worldOffsetX - CANVAS_WIDTH) { enemies.splice(index, 1); }
+    });
+}
+
+function gameLoop() {
+    if (!gameActive) {
+        gameLoop.isRunning = false;
+        return;
+    }
+    gameLoop.isRunning = true;
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+gameLoop.isRunning = false;
+
+// initialDraw関数は、ゲーム開始前にCanvasに何も描画しないシンプルなものにする
+function initialDraw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Canvas全体をクリア
+}
+// ページロード時に一度だけ呼び出す
+initialDraw();
