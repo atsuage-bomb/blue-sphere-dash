@@ -31,7 +31,7 @@
             width: 100%;
             max-width: 800px; /* PC版の最大幅を維持 */
             height: auto;
-            aspect-ratio: 2 / 1;
+            aspect-ratio: 2 / 1; /* 2:1 のアスペクト比を維持 */
         }
         #game-canvas {
             display: block;
@@ -53,6 +53,8 @@
             align-items: center;
             text-align: center;
             z-index: 10;
+            padding: 20px; /* 内側の余白を追加 */
+            box-sizing: border-box; /* paddingを含めてwidth, heightを計算 */
         }
         .overlay h2 {
             font-size: 48px;
@@ -195,9 +197,9 @@
         /* --- モバイル対応スタイル --- */
         #mobile-controls {
             display: none; /* Default hidden, shown by media query */
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
+            flex-direction: column; /* ボタンを縦に並べる */
+            align-items: center; /* 中央揃え */
+            gap: 10px; /* 行間のスペース */
             margin-top: 20px;
             width: 100%;
             max-width: 800px;
@@ -205,12 +207,12 @@
         .mobile-controls-row {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            width: 100%;
+            gap: 15px; /* ボタン間のスペース */
+            width: 100%; /* 親要素の幅いっぱいに広げる */
         }
         .mobile-button {
-            flex-grow: 1;
-            max-width: 150px;
+            flex-grow: 1; /* ボタンが使用可能なスペースを均等に占める */
+            max-width: 150px; /* 各ボタンの最大幅を設定し、大きくなりすぎないようにする */
             padding: 15px 25px;
             font-size: 18px;
             font-weight: bold;
@@ -227,8 +229,9 @@
             background-color: #ddd;
             transform: scale(0.95);
         }
+        /* ← → ボタンを少し大きくして操作しやすくする */
         #left-button, #right-button {
-            max-width: 180px;
+            max-width: 180px; /* 左右ボタンは少し広め */
         }
 
         /* 新しいスタートボタンのスタイル */
@@ -285,6 +288,7 @@
             .start-option-button {
                 font-size: 24px;
                 padding: 15px 30px;
+                width: 95%; /* さらに幅を調整 */
             }
         }
     </style>
