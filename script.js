@@ -30,9 +30,8 @@ const mobileControlsInfo = document.getElementById('mobile-controls-info');
 
 
 // canvasの元のサイズを定数として保持
-const ORIGINAL_CANAS_WIDTH = 800;
+const ORIGINAL_CANVAS_WIDTH = 800;
 const ORIGINAL_CANVAS_HEIGHT = 400;
-// canvas要素のwidth/height属性は変更せず、CSSでサイズを制御します
 canvas.width = ORIGINAL_CANVAS_WIDTH;
 canvas.height = ORIGINAL_CANVAS_HEIGHT;
 
@@ -62,7 +61,6 @@ let scaleFactor = 1; // スケーリングファクターを追加
 const ground = { y: ORIGINAL_CANVAS_HEIGHT - 40, color: '#28A745' };
 
 // --- オブジェクト生成関数 ---
-// 各オブジェクトの物理的なプロパティ（位置、サイズ、速度など）はORIGINAL_CANVAS_WIDTH/HEIGHT基準
 function createPlayer() { return { 
     x: ORIGINAL_CANVAS_WIDTH / 2,
     y: ground.y - 30,
@@ -99,27 +97,38 @@ keys = { ArrowRight: false, ArrowLeft: false, Space: false, KeyA: false };
 
 // --- イベントリスナー ---
 window.addEventListener('keydown', (e) => {
-    if (keys.hasOwnProperty(e.code)) { e.preventDefault(); keys[e.code] = true; }
+    // 特定のキー操作のみデフォルト動作を防止
+    if (e.code === 'Space' || e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'KeyA') {
+        e.preventDefault();
+    }
+    if (keys.hasOwnProperty(e.code)) { keys[e.code] = true; }
     if (e.code === 'Enter' && !gameActive) { startGame(); }
 });
-window.addEventListener('keyup', (e) => { if (keys.hasOwnProperty(e.code)) { e.preventDefault(); keys[e.code] = false; }});
+window.addEventListener('keyup', (e) => { 
+    if (keys.hasOwnProperty(e.code)) { keys[e.code] = false; }
+});
+
 restartButton.addEventListener('click', startGame);
 scoreHistoryButton.addEventListener('click', displayScores);
 closeButton.addEventListener('click', () => { scoreHistoryModal.style.display = 'none'; });
 scoreHistoryModal.addEventListener('click', (e) => { if (e.target === scoreHistoryModal) { scoreHistoryModal.style.display = 'none'; } });
 
 // スタート画面のクリック/タッチイベント（スマートフォン対応）
-function handleStartScreenInteraction(e) {
-    e.preventDefault(); // Prevent default touch/click behavior (e.g., scrolling, double-tap zoom)
+function handleStartScreenInteraction() {
+    // ここではe.preventDefault()は不要。イベントが要素に正しく紐付いていれば良い。
+    // イベントバブリングを気にしなくても、ゲーム開始で画面が消えるため。
     if (!gameActive) {
         startGame();
     }
 }
+// startScreenはオーバーレイなので、clickとtouchstartの両方で確実に反応させる
 startScreen.addEventListener('click', handleStartScreenInteraction);
 startScreen.addEventListener('touchstart', handleStartScreenInteraction);
 
 
 // モバイル操作ボタンのイベントリスナー
+// touchstart/mousedown でキーを押した状態にし、touchend/mouseup で離した状態にする
+// ここでe.preventDefault()を使うのは、ボタンタップ時にブラウザのスクロールやズームを防止するため
 jumpButton.addEventListener('touchstart', (e) => { e.preventDefault(); keys.Space = true; });
 jumpButton.addEventListener('touchend', (e) => { e.preventDefault(); keys.Space = false; });
 jumpButton.addEventListener('mousedown', (e) => { e.preventDefault(); keys.Space = true; });
@@ -153,6 +162,7 @@ function resizeGame() {
 
     initialDraw();
     
+    // PC/モバイルでの操作説明表示切り替え
     if (window.innerWidth <= 820) {
         desktopControlsInfo.style.display = 'none';
         desktopJumpInfo.style.display = 'none';
@@ -263,9 +273,6 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
     
-    // 描画の順序は「translateしてからscale」で正しいです。
-    // これにより、worldOffsetXは元の単位で適用され、その後に全体がスケールされます。
-    // ground.yなどの固定座標も、このスケールによって正しく画面に収まります。
     ctx.translate(-worldOffsetX, 0);
     ctx.scale(scaleFactor, scaleFactor); 
 
@@ -384,8 +391,7 @@ gameLoop.isRunning = false;
 function initialDraw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
-    // 描画の順序をdraw()関数と合わせる
-    ctx.translate(-worldOffsetX, 0); // initialDraw時はworldOffsetXは通常0
+    ctx.translate(-worldOffsetX, 0);
     ctx.scale(scaleFactor, scaleFactor);
     ctx.fillStyle = ground.color;
     ctx.fillRect(0, ground.y, ORIGINAL_CANVAS_WIDTH, ORIGINAL_CANVAS_HEIGHT - ground.y);
