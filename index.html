@@ -8,37 +8,36 @@
         body {
             margin: 0;
             padding: 0;
-            /* REMOVED: display: flex; justify-content: center; align-items: center; */
-            min-height: 100vh; /* Ensure body takes full height for background */
+            min-height: 100vh;
             background-color: #f0f0f0;
             font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', Meiryo, sans-serif;
-            padding: 20px 0; /* Consistent padding top/bottom */
-            box-sizing: border-box; /* Include padding in element's total width and height */
-            display: block; /* Ensure normal block flow for body */
+            padding: 20px 0;
+            box-sizing: border-box;
+            display: block;
         }
         .page-wrapper {
             display: flex;
             flex-direction: column;
-            align-items: center; /* Center items horizontally within the wrapper */
+            align-items: center;
             gap: 24px;
-            max-width: 840px; /* Adjust max-width if necessary, e.g., 800px canvas + 2*2px border + some margin */
-            margin: 0 auto; /* Center the wrapper horizontally */
-            width: 95%; /* Make it slightly responsive on large screens too */
+            max-width: 840px;
+            margin: 0 auto;
+            width: 95%;
         }
         #game-container {
             position: relative;
             border: 2px solid #333;
             overflow: hidden;
-            width: 100%; /* Full width of its parent (.page-wrapper) */
-            max-width: 800px; /* PC display max width */
+            width: 100%;
+            max-width: 800px;
             height: auto;
             aspect-ratio: 2 / 1;
         }
         #game-canvas {
             display: block;
             background-color: #87CEEB;
-            width: 100%; /* Match container width */
-            height: 100%; /* Match container height */
+            width: 100%;
+            height: 100%;
         }
         .overlay {
             position: absolute;
@@ -65,7 +64,7 @@
             margin: 20px 0;
         }
         #start-screen {
-            display: flex;
+            display: flex; /* 明示的にflexに戻す */
         }
         #game-over-screen {
             display: none;
@@ -99,8 +98,8 @@
         }
 
         #game-description {
-            width: 100%; /* Make description responsive to parent width */
-            max-width: 800px; /* Maintain max width for PC */
+            width: 100%;
+            max-width: 800px;
             background-color: #fff;
             border: 2px solid #ddd;
             border-radius: 12px;
@@ -148,8 +147,8 @@
         #button-container {
             display: flex;
             justify-content: center;
-            width: 100%; /* Responsive width */
-            max-width: 800px; /* PC max width */
+            width: 100%;
+            max-width: 800px;
         }
         #score-history-button {
             font-size: 18px;
@@ -195,13 +194,13 @@
 
         /* --- モバイル対応スタイル --- */
         #mobile-controls {
-            display: none; /* Default hidden, shown by media query */
+            display: none;
             justify-content: center;
             gap: 15px;
             margin-top: 20px;
             flex-wrap: wrap;
-            width: 100%; /* Make responsive */
-            max-width: 800px; /* PC max width */
+            width: 100%;
+            max-width: 800px;
         }
         .mobile-button {
             padding: 15px 25px;
@@ -259,8 +258,7 @@
         <canvas id="game-canvas"></canvas>
         <div id="start-screen" class="overlay">
             <h2>Blue Sphere Dash</h2>
-            <p id="start-message">画面をタップしてスタート</p>
-        </div>
+            <p id="start-message">エンターキーでスタート</p> </div>
         <div id="ui-container">
             <span id="score">スコア: 0</span><br>
             <span id="lives">ライフ: 3/3</span><br>
@@ -323,7 +321,5 @@
     </div>
 </div>
 
-<script src="script.js"></script>
-
-</body>
+<script src="script.js" defer></script> </body>
 </html>
