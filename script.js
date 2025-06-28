@@ -1,9 +1,10 @@
-// script.js (このコードで上書きしてください。すべての 'const' と 'let' を 'var' に変更します)
+// script.js (このコードで上書きしてください)
 
-console.log("script.jsが読み込まれ、実行されています！"); // この行は残します
+console.log("script.jsが読み込まれ、実行されています！");
 
 // --- 初期設定 ---
-// const 宣言ではなく、var に変更し、window オブジェクトのプロパティとして直接追加
+// const 宣言ではなく、var で宣言し、window オブジェクトのプロパティとして直接追加
+// これにより、もしどこかでcanvasが既に宣言されていてもエラーにならないようにする
 var canvas = document.getElementById('game-canvas');
 var ctx = canvas.getContext('2d');
 var uiContainer = document.getElementById('ui-container');
@@ -65,6 +66,7 @@ var backgroundObjects;
 var scaleFactor = 1;
 
 // 地面のY座標をORIGINAL_CANVAS_HEIGHT基準で定義
+// このground.yはゲームロジック用とし、描画時のY座標はdraw関数内で調整します
 var ground = { y: ORIGINAL_CANVAS_HEIGHT - 40, color: '#28A745' };
 
 // --- オブジェクト生成関数 ---
