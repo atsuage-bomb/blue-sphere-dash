@@ -80,13 +80,14 @@
         #game-over-screen {
             display: none;
         }
+        /* UIテキストのPC版デフォルトサイズ */
         #ui-container {
             display: none;
             position: absolute;
             top: 15px;
             left: 20px;
             color: white;
-            font-size: 24px; /* PC版のデフォルトサイズ */
+            font-size: 24px; 
             font-weight: bold;
             text-shadow: 2px 2px 4px #000;
         }
@@ -245,8 +246,19 @@
             max-width: 180px; /* 左右ボタンは少し広め */
         }
 
-        /* スタートボタンのスタイル (単一に戻し、非表示にするためIDを削除) */
-        /* #start-game-button { } */ /* 不要になるので削除 */
+        /* スタートボタンのスタイル (削除) */
+        /* #start-game-button { } */
+
+        /* ゲームオーバー画面のタイトルと最終スコアの調整 */
+        #game-over-screen h2 {
+            font-size: 48px;
+            margin: 0; /* マージンをリセット */
+            line-height: 1.2; /* 行の高さを調整 */
+        }
+        #game-over-screen p#final-score {
+            font-size: 28px; /* 少し小さく */
+            margin: 10px 0 20px 0; /* 上下に調整 */
+        }
 
 
         @media (max-width: 820px) {
@@ -265,33 +277,45 @@
             #mobile-controls {
                 display: flex;
             }
-            #start-screen p {
-                font-size: 20px; /* スマホでのメッセージサイズ */
-            }
+            /* スマホでのスタート画面タイトルとメッセージのサイズ */
             #start-screen h2 {
-                font-size: 40px; /* スマホでのタイトルサイズ */
+                font-size: 38px; /* さらに少し小さく */
+                margin-bottom: 8px;
             }
-            .overlay p { /* ゲームオーバー画面などのオーバーレイ */
-                font-size: 20px;
+            #start-screen p {
+                font-size: 18px; /* さらに少し小さく */
+                margin-top: 8px;
             }
-            .overlay h2 {
-                font-size: 40px;
-            }
-            /* スマホ時のUIテキストサイズ調整 */
+            /* スマホでのUIテキストサイズ調整 */
             #ui-container {
-                font-size: 18px; /* スマホでは小さくする */
+                font-size: 16px; /* さらに小さく */
+                top: 10px; /* 少し上に詰める */
+                left: 10px; /* 少し左に詰める */
+            }
+            /* スマホでのゲームオーバー画面タイトルとスコアのサイズ */
+            #game-over-screen h2 {
+                font-size: 38px; /* PCのスマホサイズに合わせる */
+                margin-top: 0;
+            }
+            #game-over-screen p#final-score {
+                font-size: 22px; /* PCのスマホサイズに合わせる */
+                margin: 8px 0 15px 0;
+            }
+            .game-button { /* リスタートボタンを含む */
+                padding: 12px 25px; /* 少し小さく */
+                font-size: 18px; /* 少し小さく */
             }
         }
 
         /* 画面の高さが低い場合のスタート画面調整（縦長スマホなど） */
         @media (max-height: 500px) { /* 例: 高さが500px以下の場合 */
             #start-screen h2 {
-                font-size: 32px; /* さらに小さく */
-                margin-bottom: 5px;
+                font-size: 30px; /* さらに小さく */
+                margin-bottom: 3px;
             }
             #start-screen p {
-                font-size: 18px; /* さらに小さく */
-                margin-top: 5px;
+                font-size: 16px; /* さらに小さく */
+                margin-top: 3px;
             }
         }
     </style>
@@ -303,7 +327,7 @@
         <canvas id="game-canvas"></canvas>
         <div id="start-screen" class="overlay">
             <h2>Blue Sphere Dash</h2>
-            <p id="start-message">エンターキーを押すか、画面のどこかをタップ/クリックしてスタート</p> </div>
+            <p id="start-message">エンターキーを押すか、画面をタップ/クリックしてスタート</p> </div>
         <div id="ui-container">
             <span id="score">スコア: 0</span><br>
             <span id="lives">ライフ: 3/3</span><br>
@@ -336,6 +360,7 @@
                     <li id="desktop-controls"><span class="key">←</span> <span class="key">→</span> : 左右に移動</li>
                     <li id="desktop-jump"><span class="key">スペース</span> : ジャンプ</li>
                     <li id="desktop-attack"><span class="key">A</span> : 弾を発射 (黄色アイテム取得後)</li>
+                    <li id="mobile-controls-info" style="display: none;">画面下のボタンで操作</li>
                 </ul>
             </div>
             <div class="description-section">
