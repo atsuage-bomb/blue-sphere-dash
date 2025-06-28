@@ -11,7 +11,7 @@ var scoreEl = document.getElementById('score');
 var livesEl = document.getElementById('lives');
 var timerEl = document.getElementById('timer');
 var startScreen = document.getElementById('start-screen');
-var startMessageEl = document.getElementById('start-message'); // この要素は残るが、メッセージはCSSで調整
+var startMessageEl = document.getElementById('start-message');
 var gameOverScreen = document.getElementById('game-over-screen');
 var gameOverTitleEl = document.getElementById('game-over-title');
 var finalScoreEl = document.getElementById('final-score');
@@ -21,20 +21,20 @@ var scoreHistoryModal = document.getElementById('score-history-modal');
 var scoreList = document.getElementById('score-list');
 var closeButton = document.querySelector('.close-button');
 
-// スタートボタンの要素取得を削除 (もうIDがないため)
-// var startGameButton = document.getElementById('start-game-button'); 
+// スタートボタンの要素を取得 (IDが変更されたため修正)
+var startGameButton = document.getElementById('start-game-button');
 
 // モバイル操作ボタンの要素を取得
 var jumpButton = document.getElementById('jump-button');
 var leftButton = document.getElementById('left-button');
 var rightButton = document.getElementById('right-button');
 var attackButton = document.getElementById('attack-button');
-// 操作説明の表示切り替え用 (変更なし)
+// 操作説明の表示切り替え用
 var desktopControlsInfo = document.getElementById('desktop-controls');
 var desktopJumpInfo = document.getElementById('desktop-jump');
 var desktopAttackInfo = document.getElementById('desktop-attack');
-// mobileControlsInfo はHTMLから削除されたため、ここも削除する
-// var mobileControlsInfo = document.getElementById('mobile-controls-info');
+var mobileControlsInfo = document.getElementById('mobile-controls-info');
+
 
 // Canvasの基準サイズをPC版に固定
 const CANVAS_WIDTH = 800;
@@ -45,6 +45,7 @@ canvas.width = CANVAS_WIDTH;
 canvas.height = CANVAS_HEIGHT;
 
 // --- ゲームの定数（固定値に戻す） ---
+// Canvasの解像度を固定するため、これらの物理定数は固定値に戻します
 var GRAVITY = 0.5;
 var JUMP_FORCE = 12;
 var PLAYER_SPEED = 5;
@@ -79,8 +80,9 @@ var gameTimer, groundEnemySpawnTimer, flyingEnemySpawnTimer, defenseItemSpawnTim
 var worldOffsetX, keys, isGameOver, gameActive = false;
 var backgroundObjects;
 
-// scaleFactor は完全に削除
-// var scaleFactor = 1;
+// scaleFactor はもはやCanvasの描画スケールではなく、物理パラメータ調整のためにのみ使われていたが、
+// 今回固定にしたため、削除するか、常に1とする。ここでは削除してシンプルにする
+// var scaleFactor = 1; // 削除
 
 // 地面のY座標も固定値に戻す
 var ground = { y: CANVAS_HEIGHT - 40, color: '#28A745' };
@@ -122,12 +124,12 @@ var keys = { ArrowRight: false, ArrowLeft: false, Space: false, KeyA: false };
 
 // --- イベントリスナー ---
 window.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' || e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'KeyA') {
+    if (e.code === 'Space' || e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'KeyA' || e.code === 'Enter') {
         e.preventDefault();
     }
     if (keys.hasOwnProperty(e.code)) { keys[e.code] = true; }
-    // Enterキーでもゲームスタート
     if (e.code === 'Enter' && !gameActive) { 
+        // Enterキーでゲームスタート
         startGame(); 
     }
 });
@@ -135,26 +137,14 @@ window.addEventListener('keyup', (e) => {
     if (keys.hasOwnProperty(e.code)) { keys[e.code] = false; }
 });
 
-restartButton.addEventListener('click', startGame);
+restartButton.addEventListener('click', startGame); // リスタートボタンはstartGameを直接呼ぶ
 scoreHistoryButton.addEventListener('click', displayScores);
 closeButton.addEventListener('click', () => { scoreHistoryModal.style.display = 'none'; });
 scoreHistoryModal.addEventListener('click', (e) => { if (e.target === scoreHistoryModal) { scoreHistoryModal.style.display = 'none'; } });
 
-// スタート画面のどこかをクリック/タップでゲームスタート (ボタンは不要になる)
-startScreen.addEventListener('click', (e) => {
-    // ターゲットがモーダル内要素でない場合のみ処理 (スコア履歴モーダルとの干渉防止)
-    if (!gameActive && !scoreHistoryModal.contains(e.target)) {
-        startGame();
-    }
-}, {passive: false}); // passive: false はpreventDefaultを使う場合に必要だが、今回は使わないので削除しても良い
-
-startScreen.addEventListener('touchstart', (e) => {
-    // ターゲットがモーダル内要素でない場合のみ処理
-    if (!gameActive && !scoreHistoryModal.contains(e.target)) {
-        e.preventDefault(); // タッチ操作によるスクロール等を防止
-        startGame();
-    }
-}, {passive: false});
+// スタートボタンのイベントリスナー (IDが変更されたため修正)
+startGameButton.addEventListener('click', startGame);
+startGameButton.addEventListener('touchstart', (e) => { e.preventDefault(); startGame(); });
 
 
 // モバイル操作ボタンのイベントリスナー (変更なし)
@@ -183,32 +173,16 @@ attackButton.addEventListener('mouseup', (e) => { e.preventDefault(); keys.KeyA 
 // この関数はCanvasの属性を変更しなくなります。CSSで対応済みのため。
 // 操作説明の表示/非表示のみ行います。
 function resizeGame() {
-    // mobileControlsInfo はHTMLから削除されたため、ここも削除する
-    // if (window.innerWidth <= 820) {
-    //     desktopControlsInfo.style.display = 'none';
-    //     desktopJumpInfo.style.display = 'none';
-    //     desktopAttackInfo.style.display = 'none';
-    //     mobileControlsInfo.style.display = 'block';
-    // } else {
-    //     desktopControlsInfo.style.display = 'list-item';
-    //     desktopJumpInfo.style.display = 'list-item';
-    //     desktopAttackInfo.style.display = 'list-item';
-    //     mobileControlsInfo.style.display = 'none';
-    // }
-    // HTMLの操作説明リストにid="mobile-controls-info"がまだ残っている場合は以下を使用
-    var mobileControlsInfoElement = document.getElementById('mobile-controls-info');
-    if (mobileControlsInfoElement) { // 要素が存在する場合のみ処理
-        if (window.innerWidth <= 820) {
-            desktopControlsInfo.style.display = 'none';
-            desktopJumpInfo.style.display = 'none';
-            desktopAttackInfo.style.display = 'none';
-            mobileControlsInfoElement.style.display = 'block';
-        } else {
-            desktopControlsInfo.style.display = 'list-item';
-            desktopJumpInfo.style.display = 'list-item';
-            desktopAttackInfo.style.display = 'list-item';
-            mobileControlsInfoElement.style.display = 'none';
-        }
+    if (window.innerWidth <= 820) {
+        desktopControlsInfo.style.display = 'none';
+        desktopJumpInfo.style.display = 'none';
+        desktopAttackInfo.style.display = 'none';
+        mobileControlsInfo.style.display = 'block';
+    } else {
+        desktopControlsInfo.style.display = 'list-item';
+        desktopJumpInfo.style.display = 'list-item';
+        desktopAttackInfo.style.display = 'list-item';
+        mobileControlsInfo.style.display = 'none';
     }
 }
 
@@ -410,8 +384,8 @@ function update() {
                 player.y < item.y + item.height &&
                 player.y + player.height > item.y) {
                 if (item.type === 'defense') player.hasShield = true;
-                if (item.type === 'attack') player.hasAttack = true;
-                if (item.type === 'recovery') { if (lives < INITIAL_LIVES) lives++; player.isHealing = true; player.healingTimer = HEALING_EFFECT_DURATION; updateUI(); }
+                else if (item.type === 'attack') player.hasAttack = true;
+                else if (item.type === 'recovery') { if (lives < INITIAL_LIVES) lives++; player.isHealing = true; player.healingTimer = HEALING_EFFECT_DURATION; updateUI(); }
                 item.isActive = false;
             }
         }
