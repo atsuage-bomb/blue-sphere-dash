@@ -1,72 +1,71 @@
-// script.js (このコードを上書きしてください)
+// script.js (このコードで上書きしてください。すべての 'const' と 'let' を 'var' に変更します)
 
-console.log("script.jsが読み込まれ、実行されています！"); // この行を追加
+console.log("script.jsが読み込まれ、実行されています！"); // この行は残します
 
 // --- 初期設定 ---
-const canvas = document.getElementById('game-canvas');
-// ... (以下、元の script.js の内容を全て貼り付け) ...
-
-// script.js
-// --- 初期設定 ---
-const canvas = document.getElementById('game-canvas');
-const ctx = canvas.getContext('2d');
-const uiContainer = document.getElementById('ui-container');
-const scoreEl = document.getElementById('score');
-const livesEl = document.getElementById('lives');
-const timerEl = document.getElementById('timer');
-const startScreen = document.getElementById('start-screen');
-const startMessageEl = document.getElementById('start-message');
-const gameOverScreen = document.getElementById('game-over-screen');
-const gameOverTitleEl = document.getElementById('game-over-title');
-const finalScoreEl = document.getElementById('final-score');
-const restartButton = document.getElementById('restart-button');
-const scoreHistoryButton = document.getElementById('score-history-button');
-const scoreHistoryModal = document.getElementById('score-history-modal');
-const scoreList = document.getElementById('score-list');
-const closeButton = document.querySelector('.close-button');
+// const 宣言ではなく、var に変更し、window オブジェクトのプロパティとして直接追加
+var canvas = document.getElementById('game-canvas');
+var ctx = canvas.getContext('2d');
+var uiContainer = document.getElementById('ui-container');
+var scoreEl = document.getElementById('score');
+var livesEl = document.getElementById('lives');
+var timerEl = document.getElementById('timer');
+var startScreen = document.getElementById('start-screen');
+var startMessageEl = document.getElementById('start-message');
+var gameOverScreen = document.getElementById('game-over-screen');
+var gameOverTitleEl = document.getElementById('game-over-title');
+var finalScoreEl = document.getElementById('final-score');
+var restartButton = document.getElementById('restart-button');
+var scoreHistoryButton = document.getElementById('score-history-button');
+var scoreHistoryModal = document.getElementById('score-history-modal');
+var scoreList = document.getElementById('score-list');
+var closeButton = document.querySelector('.close-button');
 
 // モバイル操作ボタンの要素を取得
-const jumpButton = document.getElementById('jump-button');
-const leftButton = document.getElementById('left-button');
-const rightButton = document.getElementById('right-button');
-const attackButton = document.getElementById('attack-button');
+var jumpButton = document.getElementById('jump-button');
+var leftButton = document.getElementById('left-button');
+var rightButton = document.getElementById('right-button');
+var attackButton = document.getElementById('attack-button');
 // 操作説明の表示切り替え用
-const desktopControlsInfo = document.getElementById('desktop-controls');
-const desktopJumpInfo = document.getElementById('desktop-jump');
-const desktopAttackInfo = document.getElementById('desktop-attack');
-const mobileControlsInfo = document.getElementById('mobile-controls-info');
+var desktopControlsInfo = document.getElementById('desktop-controls');
+var desktopJumpInfo = document.getElementById('desktop-jump');
+var desktopAttackInfo = document.getElementById('desktop-attack');
+var mobileControlsInfo = document.getElementById('mobile-controls-info');
 
 
 // canvasの元のサイズを定数として保持
+// ここはconstのままで問題ありません
 const ORIGINAL_CANVAS_WIDTH = 800;
 const ORIGINAL_CANVAS_HEIGHT = 400;
 canvas.width = ORIGINAL_CANVAS_WIDTH;
 canvas.height = ORIGINAL_CANVAS_HEIGHT;
 
 // --- ゲームの定数 ---
-const GRAVITY = 0.5;
-const JUMP_FORCE = 12;
-const PLAYER_SPEED = 5;
-const BULLET_SPEED = 10;
-const ENEMY_BULLET_SPEED = 5;
-const MAX_GROUND_ENEMIES = 3;
-const MAX_FLYING_ENEMIES = 2;
-const INITIAL_LIVES = 3;
-const GAME_DURATION = 60;
-const INVINCIBILITY_DURATION = 120;
-const ITEM_LIFESPAN = 300;
-const HEALING_EFFECT_DURATION = 120;
-const SCORES_KEY = 'blueSphereDashScores';
+// これらも全て var に変更
+var GRAVITY = 0.5;
+var JUMP_FORCE = 12;
+var PLAYER_SPEED = 5;
+var BULLET_SPEED = 10;
+var ENEMY_BULLET_SPEED = 5;
+var MAX_GROUND_ENEMIES = 3;
+var MAX_FLYING_ENEMIES = 2;
+var INITIAL_LIVES = 3;
+var GAME_DURATION = 60;
+var INVINCIBILITY_DURATION = 120;
+var ITEM_LIFESPAN = 300;
+var HEALING_EFFECT_DURATION = 120;
+var SCORES_KEY = 'blueSphereDashScores';
 
 // --- ゲームの状態変数 ---
-let player, enemies, playerBullets, enemyBullets, defenseItem, attackItem, recoveryItem, score, lives, timeLeft;
-let gameTimer, groundEnemySpawnTimer, flyingEnemySpawnTimer, defenseItemSpawnTimer, attackItemSpawnTimer, recoveryItemSpawnTimer;
-let worldOffsetX, keys, isGameOver, gameActive = false;
-let backgroundObjects;
-let scaleFactor = 1; // スケーリングファクターを追加
+// これらも全て var に変更
+var player, enemies, playerBullets, enemyBullets, defenseItem, attackItem, recoveryItem, score, lives, timeLeft;
+var gameTimer, groundEnemySpawnTimer, flyingEnemySpawnTimer, defenseItemSpawnTimer, attackItemSpawnTimer, recoveryItemSpawnTimer;
+var worldOffsetX, keys, isGameOver, gameActive = false;
+var backgroundObjects;
+var scaleFactor = 1;
 
 // 地面のY座標をORIGINAL_CANVAS_HEIGHT基準で定義
-const ground = { y: ORIGINAL_CANVAS_HEIGHT - 40, color: '#28A745' };
+var ground = { y: ORIGINAL_CANVAS_HEIGHT - 40, color: '#28A745' };
 
 // --- オブジェクト生成関数 ---
 function createPlayer() { return { 
@@ -93,7 +92,7 @@ function createPlayerBullet() { playerBullets.push({
     width: 25, height: 5, color: 'white'
 }); }
 function createEnemyBullet(enemy) { 
-    const angle = Math.atan2((player.y + player.radius) - (enemy.y + enemy.height / 2), (player.x + player.radius) - (enemy.x + enemy.width / 2)); 
+    var angle = Math.atan2((player.y + player.radius) - (enemy.y + enemy.height / 2), (player.x + player.radius) - (enemy.x + enemy.width / 2)); 
     enemyBullets.push({ 
         x: enemy.x, y: enemy.y + enemy.height / 2, 
         radius: 5, color: 'red',
@@ -101,12 +100,11 @@ function createEnemyBullet(enemy) {
     }); 
 }
 
-keys = { ArrowRight: false, ArrowLeft: false, Space: false, KeyA: false };
+var keys = { ArrowRight: false, ArrowLeft: false, Space: false, KeyA: false };
 
 // --- イベントリスナー ---
 window.addEventListener('keydown', (e) => {
-    // 特定のキー操作のみデフォルト動作を防止
-    if (e.code === 'Space' || e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'KeyA') {
+    if (e.code === 'Space' || e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'KeyA' || e.code === 'Enter') {
         e.preventDefault();
     }
     if (keys.hasOwnProperty(e.code)) { keys[e.code] = true; }
@@ -121,22 +119,15 @@ scoreHistoryButton.addEventListener('click', displayScores);
 closeButton.addEventListener('click', () => { scoreHistoryModal.style.display = 'none'; });
 scoreHistoryModal.addEventListener('click', (e) => { if (e.target === scoreHistoryModal) { scoreHistoryModal.style.display = 'none'; } });
 
-// スタート画面のクリック/タッチイベント（スマートフォン対応）
 function handleStartScreenInteraction() {
-    // ここではe.preventDefault()は不要。イベントが要素に正しく紐付いていれば良い。
-    // イベントバブリングを気にしなくても、ゲーム開始で画面が消えるため。
     if (!gameActive) {
         startGame();
     }
 }
-// startScreenはオーバーレイなので、clickとtouchstartの両方で確実に反応させる
-startScreen.addEventListener('click', handleStartScreenInteraction);
-startScreen.addEventListener('touchstart', handleStartScreenInteraction);
+startScreen.addEventListener('click', handleStartScreenInteraction, {passive: false});
+startScreen.addEventListener('touchstart', handleStartScreenInteraction, {passive: false});
 
 
-// モバイル操作ボタンのイベントリスナー
-// touchstart/mousedown でキーを押した状態にし、touchend/mouseup で離した状態にする
-// ここでe.preventDefault()を使うのは、ボタンタップ時にブラウザのスクロールやズームを防止するため
 jumpButton.addEventListener('touchstart', (e) => { e.preventDefault(); keys.Space = true; });
 jumpButton.addEventListener('touchend', (e) => { e.preventDefault(); keys.Space = false; });
 jumpButton.addEventListener('mousedown', (e) => { e.preventDefault(); keys.Space = true; });
@@ -160,17 +151,15 @@ attackButton.addEventListener('mouseup', (e) => { e.preventDefault(); keys.KeyA 
 
 // --- 画面サイズ変更時の処理 ---
 function resizeGame() {
-    const gameContainer = document.getElementById('game-container');
-    const containerWidth = gameContainer.clientWidth;
+    var gameContainer = document.getElementById('game-container');
+    var containerWidth = gameContainer.clientWidth;
     scaleFactor = containerWidth / ORIGINAL_CANVAS_WIDTH;
 
-    // canvas要素の属性は元のサイズを維持 (800x400)
     canvas.width = ORIGINAL_CANVAS_WIDTH;
     canvas.height = ORIGINAL_CANVAS_HEIGHT;
 
     initialDraw();
     
-    // PC/モバイルでの操作説明表示切り替え
     if (window.innerWidth <= 820) {
         desktopControlsInfo.style.display = 'none';
         desktopJumpInfo.style.display = 'none';
@@ -194,6 +183,9 @@ function startGame() {
     startScreen.style.display = 'none';
     gameOverScreen.style.display = 'none';
     init();
+    if (!gameLoop.isRunning) {
+        gameLoop();
+    }
 }
 
 // --- ゲーム初期化 ---
@@ -205,7 +197,7 @@ function init() {
     score = 0; lives = INITIAL_LIVES; timeLeft = GAME_DURATION; isGameOver = false;
     worldOffsetX = player.x - (ORIGINAL_CANVAS_WIDTH / 2);
 
-    for (let i = 0; i < 30; i++) { backgroundObjects.push({ x: i * (Math.random() * 150 + 250), trunkWidth: 20, trunkHeight: 40, leafWidth: 80, leafHeight: 80 }); }
+    for (var i = 0; i < 30; i++) { backgroundObjects.push({ x: i * (Math.random() * 150 + 250), trunkWidth: 20, trunkHeight: 40, leafWidth: 80, leafHeight: 80 }); }
     
     updateUI();
     uiContainer.style.display = 'block';
@@ -220,8 +212,6 @@ function init() {
     
     defenseItemSpawnTimer = setTimeout(() => scheduleNextItem(defenseItem), 10000);
     attackItemSpawnTimer = setTimeout(() => scheduleNextItem(attackItem), 15000);
-
-    if (!gameLoop.isRunning) { gameLoop(); }
 }
 
 // --- アイテム & 敵の出現制御 ---
@@ -235,7 +225,7 @@ function spawnItem(item) {
     item.x = player.x + 100 + Math.random() * (ORIGINAL_CANVAS_WIDTH / 2);
     item.y = ground.y - item.height - (Math.random() * 80 + 50);
 }
-function spawnEnemy(type) { if (isGameOver) return; const currentEnemies = enemies.filter(e => e.type === type); const maxEnemies = type === 'ground' ? MAX_GROUND_ENEMIES : MAX_FLYING_ENEMIES; if (currentEnemies.length < maxEnemies) { enemies.push(createEnemy(type)); } }
+function spawnEnemy(type) { if (isGameOver) return; var currentEnemies = enemies.filter(e => e.type === type); var maxEnemies = type === 'ground' ? MAX_GROUND_ENEMIES : MAX_FLYING_ENEMIES; if (currentEnemies.length < maxEnemies) { enemies.push(createEnemy(type)); } }
 
 function updateUI() {
     scoreEl.textContent = `スコア: ${score}`;
@@ -254,21 +244,21 @@ function endGame(message) {
 
 // --- スコア保存・表示関数 ---
 function saveScore(scoreToSave) {
-    let scores = JSON.parse(localStorage.getItem(SCORES_KEY)) || [];
-    const newEntry = { score: scoreToSave, date: new Date().toLocaleString('ja-JP') };
+    var scores = JSON.parse(localStorage.getItem(SCORES_KEY)) || [];
+    var newEntry = { score: scoreToSave, date: new Date().toLocaleString('ja-JP') };
     scores.unshift(newEntry);
     scores = scores.slice(0, 10);
     localStorage.setItem(SCORES_KEY, JSON.stringify(scores));
 }
 
 function displayScores() {
-    let scores = JSON.parse(localStorage.getItem(SCORES_KEY)) || [];
+    var scores = JSON.parse(localStorage.getItem(SCORES_KEY)) || [];
     scoreList.innerHTML = '';
     if (scores.length === 0) {
         scoreList.innerHTML = '<li>まだプレイ履歴がありません。</li>';
     } else {
         scores.forEach(entry => {
-            const li = document.createElement('li');
+            var li = document.createElement('li');
             li.innerHTML = `<strong>${entry.score}点</strong> <small>${entry.date}</small>`;
             scoreList.appendChild(li);
         });
@@ -287,7 +277,7 @@ function draw() {
     backgroundObjects.forEach(obj => {
         ctx.fillStyle = '#8B4513'; ctx.fillRect(obj.x, ground.y - obj.trunkHeight, obj.trunkWidth, obj.trunkHeight);
         ctx.fillStyle = '#228B22'; ctx.beginPath();
-        const treeTopX = obj.x + (obj.trunkWidth / 2); const treeTopY = ground.y - obj.trunkHeight - obj.leafHeight;
+        var treeTopX = obj.x + (obj.trunkWidth / 2); var treeTopY = ground.y - obj.trunkHeight - obj.leafHeight;
         ctx.moveTo(treeTopX, treeTopY); ctx.lineTo(treeTopX - obj.leafWidth / 2, ground.y - obj.trunkHeight); ctx.lineTo(treeTopX + obj.leafWidth / 2, ground.y - obj.trunkHeight); ctx.closePath(); ctx.fill();
     });
     
@@ -296,10 +286,10 @@ function draw() {
     
     ctx.fillStyle = '#C2B280'; ctx.fillRect(-10, 0, 10, ORIGINAL_CANVAS_HEIGHT);
 
-    let shouldDrawPlayer = !(player.isInvincible && Math.floor(player.invincibilityTimer / 10) % 2 === 0);
+    var shouldDrawPlayer = !(player.isInvincible && Math.floor(player.invincibilityTimer / 10) % 2 === 0);
     if (shouldDrawPlayer) {
         ctx.fillStyle = player.color; ctx.beginPath(); ctx.arc(player.x + player.radius, player.y + player.radius, player.radius, 0, Math.PI * 2); ctx.fill();
-        if (player.hasShield) { ctx.strokeStyle = 'black'; ctx.lineWidth = 3 / scaleFactor; ctx.stroke(); } // 線幅もスケールに合わせて調整
+        if (player.hasShield) { ctx.strokeStyle = 'black'; ctx.lineWidth = 3 / scaleFactor; ctx.stroke(); }
         if (player.isHealing && Math.floor(player.healingTimer / 10) % 2 !== 0) { ctx.fillStyle = '#32CD32'; ctx.beginPath(); ctx.arc(player.x + player.radius, player.y + player.radius, 6, 0, Math.PI * 2); ctx.fill(); }
         if (player.hasAttack) { ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(player.x + player.radius, player.y + player.radius, 5, 0, Math.PI * 2); ctx.fill(); }
     }
@@ -342,7 +332,7 @@ function update() {
     if (player.isInvincible) { if (--player.invincibilityTimer <= 0) player.isInvincible = false; }
     if (player.isHealing) { if (--player.healingTimer <= 0) player.isHealing = false; }
 
-    [defenseItem, attackItem, recoveryItem].forEach(item => { if (item.isActive) { if (--item.lifeTimer <= 0) { item.isActive = false; const nextTimer = setTimeout(() => scheduleNextItem(item), 5000 + Math.random() * 5000); if (item.type === 'defense') defenseItemSpawnTimer = nextTimer; else if (item.type === 'attack') attackItemSpawnTimer = nextTimer; else recoveryItemSpawnTimer = nextTimer; }
+    [defenseItem, attackItem, recoveryItem].forEach(item => { if (item.isActive) { if (--item.lifeTimer <= 0) { item.isActive = false; var nextTimer = setTimeout(() => scheduleNextItem(item), 5000 + Math.random() * 5000); if (item.type === 'defense') defenseItemSpawnTimer = nextTimer; else if (item.type === 'attack') attackItemSpawnTimer = nextTimer; else recoveryItemSpawnTimer = nextTimer; }
         if (player.x < item.x + item.width && player.x + player.width > item.x && player.y < item.y + item.height && player.y + player.height > item.y) {
             if (item.type === 'defense') player.hasShield = true;
             if (item.type === 'attack') player.hasAttack = true;
@@ -353,8 +343,8 @@ function update() {
 
     if (keys.KeyA && player.hasAttack) { createPlayerBullet(); keys.KeyA = false; }
     
-    for (let i = playerBullets.length - 1; i >= 0; i--) { playerBullets[i].x += BULLET_SPEED; if (playerBullets[i].x > worldOffsetX + ORIGINAL_CANVAS_WIDTH) playerBullets.splice(i, 1); }
-    for (let i = enemyBullets.length - 1; i >= 0; i--) { const bullet = enemyBullets[i]; bullet.x += bullet.dx; bullet.y += bullet.dy; if (bullet.x < worldOffsetX - bullet.radius || bullet.x > worldOffsetX + ORIGINAL_CANVAS_WIDTH + bullet.radius || bullet.y < -bullet.radius || bullet.y > ORIGINAL_CANVAS_HEIGHT + bullet.radius) { enemyBullets.splice(i, 1); } }
+    for (var i = playerBullets.length - 1; i >= 0; i--) { playerBullets[i].x += BULLET_SPEED; if (playerBullets[i].x > worldOffsetX + ORIGINAL_CANVAS_WIDTH) playerBullets.splice(i, 1); }
+    for (var i = enemyBullets.length - 1; i >= 0; i--) { var bullet = enemyBullets[i]; bullet.x += bullet.dx; bullet.y += bullet.dy; if (bullet.x < worldOffsetX - bullet.radius || bullet.x > worldOffsetX + ORIGINAL_CANVAS_WIDTH + bullet.radius || bullet.y < -bullet.radius || bullet.y > ORIGINAL_CANVAS_HEIGHT + bullet.radius) { enemyBullets.splice(i, 1); } }
 
     if (player.onGround) { if (keys.ArrowRight) player.dx = PLAYER_SPEED; else if (keys.ArrowLeft) player.dx = -PLAYER_SPEED; else player.dx = 0; } else { if (keys.ArrowRight) player.dx = PLAYER_SPEED; else if (keys.ArrowLeft) player.dx = -PLAYER_SPEED; }
     if (keys.Space && player.onGround) { player.dy = -JUMP_FORCE; player.onGround = false; }
@@ -362,14 +352,14 @@ function update() {
     if (player.x < 0) player.x = 0;
     if (player.y + player.height >= ground.y) { player.y = ground.y - player.height; player.dy = 0; player.onGround = true; }
     
-    const deadZoneLeft = worldOffsetX + ORIGINAL_CANVAS_WIDTH * 0.4;
-    const deadZoneRight = worldOffsetX + ORIGINAL_CANVAS_WIDTH * 0.6;
+    var deadZoneLeft = worldOffsetX + ORIGINAL_CANVAS_WIDTH * 0.4;
+    var deadZoneRight = worldOffsetX + ORIGINAL_CANVAS_WIDTH * 0.6;
     if (player.x < deadZoneLeft) worldOffsetX = player.x - ORIGINAL_CANVAS_WIDTH * 0.4;
     else if (player.x > deadZoneRight) worldOffsetX = player.x - ORIGINAL_CANVAS_WIDTH * 0.6;
     if (worldOffsetX < 0) worldOffsetX = 0;
 
-    for (let i = playerBullets.length - 1; i >= 0; i--) { for (let j = enemies.length - 1; j >= 0; j--) { const bullet = playerBullets[i]; const enemy = enemies[j]; if (bullet && enemy && bullet.x < enemy.x + enemy.width && bullet.x + bullet.width > enemy.x && bullet.y < enemy.y + enemy.height && bullet.y + bullet.height > enemy.y) { score += (enemy.type === 'ground') ? 1 : 2; enemies.splice(j, 1); playerBullets.splice(i, 1); updateUI(); break; } } }
-    for (let i = enemyBullets.length - 1; i >= 0; i--) { const bullet = enemyBullets[i]; const dx = (player.x + player.radius) - bullet.x; const dy = (player.y + player.radius) - bullet.y; const distance = Math.sqrt(dx * dx + dy * dy); if (distance < player.radius + bullet.radius) { handlePlayerDamage(); enemyBullets.splice(i, 1); } }
+    for (var i = playerBullets.length - 1; i >= 0; i--) { for (var j = enemies.length - 1; j >= 0; j--) { var bullet = playerBullets[i]; var enemy = enemies[j]; if (bullet && enemy && bullet.x < enemy.x + enemy.width && bullet.x + bullet.width > enemy.x && bullet.y < enemy.y + enemy.height && bullet.y + bullet.height > enemy.y) { score += (enemy.type === 'ground') ? 1 : 2; enemies.splice(j, 1); playerBullets.splice(i, 1); updateUI(); break; } } }
+    for (var i = enemyBullets.length - 1; i >= 0; i--) { var bullet = enemyBullets[i]; var dx = (player.x + player.radius) - bullet.x; var dy = (player.y + player.radius) - bullet.y; var distance = Math.sqrt(dx * dx + dy * dy); if (distance < player.radius + bullet.radius) { handlePlayerDamage(); enemyBullets.splice(i, 1); } }
     
     enemies.forEach((enemy, index) => {
         enemy.x -= enemy.speed;
