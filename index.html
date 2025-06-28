@@ -56,15 +56,24 @@
             padding: 20px; /* 内側の余白を追加 */
             box-sizing: border-box; /* paddingを含めてwidth, heightを計算 */
         }
-        .overlay h2 {
+        /* スタート画面のテキスト調整 */
+        #start-screen h2 {
             font-size: 48px;
-            margin: 0;
+            margin: 0 0 10px 0; /* 下に少しマージンを追加 */
             text-shadow: 3px 3px 6px #000;
+            line-height: 1; /* 行の高さを調整 */
         }
+        #start-screen p {
+            font-size: 24px;
+            margin: 10px 0 0 0; /* 上に少しマージンを追加 */
+            line-height: 1.2; /* 行の高さを調整 */
+        }
+        /* オーバーレイのフォントサイズはそのまま */
         .overlay p {
             font-size: 24px;
             margin: 20px 0;
         }
+
         #start-screen {
             display: flex;
         }
@@ -77,7 +86,7 @@
             top: 15px;
             left: 20px;
             color: white;
-            font-size: 24px;
+            font-size: 24px; /* PC版のデフォルトサイズ */
             font-weight: bold;
             text-shadow: 2px 2px 4px #000;
         }
@@ -236,27 +245,9 @@
             max-width: 180px; /* 左右ボタンは少し広め */
         }
 
-        /* スタートボタンのスタイル (単一に戻す) */
-        #start-game-button { /* IDを変更 */
-            padding: 20px 40px;
-            font-size: 28px;
-            font-weight: bold;
-            color: #333;
-            background-color: #fff;
-            border: 2px solid #333;
-            border-radius: 15px;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.1s;
-            margin-top: 20px; /* タイトルとの間隔 */
-            width: 80%; /* 幅を少し広げる */
-            max-width: 300px; /* 最大幅 */
-        }
-        #start-game-button:hover {
-            background-color: #eee;
-        }
-        #start-game-button:active {
-            transform: scale(0.98);
-        }
+        /* スタートボタンのスタイル (単一に戻し、非表示にするためIDを削除) */
+        /* #start-game-button { } */ /* 不要になるので削除 */
+
 
         @media (max-width: 820px) {
             body {
@@ -275,22 +266,32 @@
                 display: flex;
             }
             #start-screen p {
-                font-size: 20px;
+                font-size: 20px; /* スマホでのメッセージサイズ */
             }
             #start-screen h2 {
-                font-size: 40px;
+                font-size: 40px; /* スマホでのタイトルサイズ */
             }
-            .overlay p {
+            .overlay p { /* ゲームオーバー画面などのオーバーレイ */
                 font-size: 20px;
             }
             .overlay h2 {
                 font-size: 40px;
             }
-            /* スマホ時のスタートボタンの調整 */
-            #start-game-button { /* IDを変更 */
-                font-size: 24px;
-                padding: 15px 30px;
-                width: 95%; /* さらに幅を調整 */
+            /* スマホ時のUIテキストサイズ調整 */
+            #ui-container {
+                font-size: 18px; /* スマホでは小さくする */
+            }
+        }
+
+        /* 画面の高さが低い場合のスタート画面調整（縦長スマホなど） */
+        @media (max-height: 500px) { /* 例: 高さが500px以下の場合 */
+            #start-screen h2 {
+                font-size: 32px; /* さらに小さく */
+                margin-bottom: 5px;
+            }
+            #start-screen p {
+                font-size: 18px; /* さらに小さく */
+                margin-top: 5px;
             }
         }
     </style>
@@ -302,7 +303,7 @@
         <canvas id="game-canvas"></canvas>
         <div id="start-screen" class="overlay">
             <h2>Blue Sphere Dash</h2>
-            <p id="start-message">エンターキーを押すか、画面をタップしてスタート</p> <button id="start-game-button" class="game-button">ゲームスタート</button> </div>
+            <p id="start-message">エンターキーを押すか、画面のどこかをタップ/クリックしてスタート</p> </div>
         <div id="ui-container">
             <span id="score">スコア: 0</span><br>
             <span id="lives">ライフ: 3/3</span><br>
@@ -335,7 +336,6 @@
                     <li id="desktop-controls"><span class="key">←</span> <span class="key">→</span> : 左右に移動</li>
                     <li id="desktop-jump"><span class="key">スペース</span> : ジャンプ</li>
                     <li id="desktop-attack"><span class="key">A</span> : 弾を発射 (黄色アイテム取得後)</li>
-                    <li id="mobile-controls-info" style="display: none;">画面下のボタンで操作</li>
                 </ul>
             </div>
             <div class="description-section">
