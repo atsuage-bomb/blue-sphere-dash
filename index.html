@@ -29,7 +29,7 @@
             border: 2px solid #333;
             overflow: hidden;
             width: 100%;
-            max-width: 800px;
+            max-width: 800px; /* PC版の最大幅を維持 */
             height: auto;
             aspect-ratio: 2 / 1;
         }
@@ -195,9 +195,9 @@
         /* --- モバイル対応スタイル --- */
         #mobile-controls {
             display: none; /* Default hidden, shown by media query */
-            flex-direction: column; /* ボタンを縦に並べる */
-            align-items: center; /* 中央揃え */
-            gap: 10px; /* 行間のスペース */
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
             margin-top: 20px;
             width: 100%;
             max-width: 800px;
@@ -205,12 +205,12 @@
         .mobile-controls-row {
             display: flex;
             justify-content: center;
-            gap: 15px; /* ボタン間のスペース */
-            width: 100%; /* 親要素の幅いっぱいに広げる */
+            gap: 15px;
+            width: 100%;
         }
         .mobile-button {
-            flex-grow: 1; /* ボタンが使用可能なスペースを均等に占める */
-            max-width: 150px; /* 各ボタンの最大幅を設定し、大きくなりすぎないようにする */
+            flex-grow: 1;
+            max-width: 150px;
             padding: 15px 25px;
             font-size: 18px;
             font-weight: bold;
@@ -227,9 +227,30 @@
             background-color: #ddd;
             transform: scale(0.95);
         }
-        /* ← → ボタンを少し大きくして操作しやすくする */
         #left-button, #right-button {
-            max-width: 180px; /* 左右ボタンは少し広め */
+            max-width: 180px;
+        }
+
+        /* 新しいスタートボタンのスタイル */
+        .start-option-button {
+            padding: 20px 40px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            background-color: #fff;
+            border: 2px solid #333;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            margin: 10px; /* ボタン間のスペース */
+            width: 80%; /* 幅を少し広げる */
+            max-width: 300px; /* 最大幅 */
+        }
+        .start-option-button:hover {
+            background-color: #eee;
+        }
+        .start-option-button:active {
+            transform: scale(0.98);
         }
 
         @media (max-width: 820px) {
@@ -260,6 +281,11 @@
             .overlay h2 {
                 font-size: 40px;
             }
+            /* スマホ時のスタートボタンの調整 */
+            .start-option-button {
+                font-size: 24px;
+                padding: 15px 30px;
+            }
         }
     </style>
 </head>
@@ -270,7 +296,9 @@
         <canvas id="game-canvas"></canvas>
         <div id="start-screen" class="overlay">
             <h2>Blue Sphere Dash</h2>
-            <p id="start-message">エンターキーでスタート</p>
+            <p>プレイモードを選択してください</p>
+            <button id="start-pc" class="start-option-button">PC版でプレイ</button>
+            <button id="start-mobile" class="start-option-button">スマホ版でプレイ</button>
         </div>
         <div id="ui-container">
             <span id="score">スコア: 0</span><br>
