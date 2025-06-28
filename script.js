@@ -3,8 +3,7 @@
 console.log("script.jsが読み込まれ、実行されています！");
 
 // --- 初期設定 ---
-// const 宣言ではなく、var で宣言し、window オブジェクトのプロパティとして直接追加
-// これにより、もしどこかでcanvasが既に宣言されていてもエラーにならないようにする
+// const を var に戻します。これまでのエラー回避策として維持します。
 var canvas = document.getElementById('game-canvas');
 var ctx = canvas.getContext('2d');
 var uiContainer = document.getElementById('ui-container');
@@ -12,42 +11,50 @@ var scoreEl = document.getElementById('score');
 var livesEl = document.getElementById('lives');
 var timerEl = document.getElementById('timer');
 var startScreen = document.getElementById('start-screen');
-var startMessageEl = document.getElementById('start-message');
+var startMessageEl = document.getElementById('start-message'); // このメッセージは使わなくなるので削除してもOKですが、残しておきます。
 var gameOverScreen = document.getElementById('game-over-screen');
 var gameOverTitleEl = document.getElementById('game-over-title');
 var finalScoreEl = document.getElementById('final-score');
 var restartButton = document.getElementById('restart-button');
 var scoreHistoryButton = document.getElementById('score-history-button');
 var scoreHistoryModal = document.getElementById('score-history-modal');
-var scoreList = document.getElementById('score-list');
 var closeButton = document.querySelector('.close-button');
+var scoreList = document.getElementById('score-list'); // 定義を追加
 
-// モバイル操作ボタンの要素を取得
+// 新しいスタートボタンの要素を取得
+var startPcButton = document.getElementById('start-pc');
+var startMobileButton = document.getElementById('start-mobile');
+
+// モバイル操作ボタンの要素を取得 (変更なし)
 var jumpButton = document.getElementById('jump-button');
 var leftButton = document.getElementById('left-button');
 var rightButton = document.getElementById('right-button');
 var attackButton = document.getElementById('attack-button');
-// 操作説明の表示切り替え用
+// 操作説明の表示切り替え用 (変更なし)
 var desktopControlsInfo = document.getElementById('desktop-controls');
 var desktopJumpInfo = document.getElementById('desktop-jump');
 var desktopAttackInfo = document.getElementById('desktop-attack');
 var mobileControlsInfo = document.getElementById('mobile-controls-info');
 
 
-// canvasの元のサイズを定数として保持
-// ここはconstのままで問題ありません
-const ORIGINAL_CANVAS_WIDTH = 800;
-const ORIGINAL_CANVAS_HEIGHT = 400;
-canvas.width = ORIGINAL_CANVAS_WIDTH;
-canvas.height = ORIGINAL_CANVAS_HEIGHT;
+// Canvasの元のサイズを定数として保持 (PC版の基準サイズ)
+const PC_CANVAS_WIDTH = 800;
+const PC_CANVAS_HEIGHT = 400;
+// スマホ版の基準サイズ（PC版の半分程度に設定）
+const MOBILE_CANVAS_WIDTH = 400;
+const MOBILE_CANVAS_HEIGHT = 200;
 
-// --- ゲームの定数 ---
-// これらも全て var に変更
-var GRAVITY = 0.5;
-var JUMP_FORCE = 12;
-var PLAYER_SPEED = 5;
-var BULLET_SPEED = 10;
-var ENEMY_BULLET_SPEED = 5;
+// 現在のCanvasの基準サイズを格納する変数
+var CURRENT_CANVAS_WIDTH;
+var CURRENT_CANVAS_HEIGHT;
+
+// --- ゲームの定数（動的に設定される） ---
+var GRAVITY;
+var JUMP_FORCE;
+var PLAYER_SPEED;
+var BULLET_SPEED;
+var ENEMY_BULLET_SPEED;
+// 他の定数はそのまま
 var MAX_GROUND_ENEMIES = 3;
 var MAX_FLYING_ENEMIES = 2;
 var INITIAL_LIVES = 3;
@@ -58,30 +65,30 @@ var HEALING_EFFECT_DURATION = 120;
 var SCORES_KEY = 'blueSphereDashScores';
 
 // --- ゲームの状態変数 ---
-// これらも全て var に変更
 var player, enemies, playerBullets, enemyBullets, defenseItem, attackItem, recoveryItem, score, lives, timeLeft;
 var gameTimer, groundEnemySpawnTimer, flyingEnemySpawnTimer, defenseItemSpawnTimer, attackItemSpawnTimer, recoveryItemSpawnTimer;
 var worldOffsetX, keys, isGameOver, gameActive = false;
 var backgroundObjects;
-var scaleFactor = 1;
+// scaleFactor はもはやCanvasの描画スケールではなく、物理パラメータ調整のための比率になります
+var scaleFactor = 1; // 物理パラメータの基準スケール（PC版は1、スマホ版は0.5）
 
-// 地面のY座標をORIGINAL_CANVAS_HEIGHT基準で定義
-// このground.yはゲームロジック用とし、描画時のY座標はdraw関数内で調整します
-var ground = { y: ORIGINAL_CANVAS_HEIGHT - 40, color: '#28A745' };
+// 地面のY座標は、その時点の CURRENT_CANVAS_HEIGHT から計算するように変更
+var ground; // オブジェクトとして初期化しない
 
 // --- オブジェクト生成関数 ---
+// 各オブジェクトの物理的なプロパティ（位置、サイズ、速度など）は CURRENT_CANVAS_WIDTH/HEIGHT 基準
 function createPlayer() { return { 
-    x: ORIGINAL_CANVAS_WIDTH / 2,
+    x: CURRENT_CANVAS_WIDTH / 2,
     y: ground.y - 30,
     width: 30, height: 30, radius: 15,
     dx: 0, dy: 0, onGround: false, color: '#007BFF', isInvincible: false, invincibilityTimer: 0, hasShield: false, hasAttack: false, isHealing: false, healingTimer: 0 
 }; }
 function createEnemy(type) { return { 
     type: type, 
-    x: worldOffsetX + ORIGINAL_CANVAS_WIDTH + Math.random() * 200,
+    x: worldOffsetX + CURRENT_CANVAS_WIDTH + Math.random() * 200,
     y: type === 'ground' ? ground.y - 30 : Math.random() * (ground.y - 200) + 50,
     width: 30, height: 30, color: type === 'ground' ? '#DC3545' : 'black', 
-    speed: type === 'ground' ? 3 : Math.random() * 2 + 1,
+    speed: type === 'ground' ? PLAYER_SPEED * 0.6 : PLAYER_SPEED * (Math.random() * 0.4 + 0.2), // プレイヤー速度基準で調整
     shootCooldown: 120 
 }; }
 function createItem(type) { return { 
@@ -104,32 +111,29 @@ function createEnemyBullet(enemy) {
 
 var keys = { ArrowRight: false, ArrowLeft: false, Space: false, KeyA: false };
 
-// --- イベントリスナー ---
+// --- イベントリスナー（変更なし） ---
 window.addEventListener('keydown', (e) => {
     if (e.code === 'Space' || e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'KeyA' || e.code === 'Enter') {
         e.preventDefault();
     }
     if (keys.hasOwnProperty(e.code)) { keys[e.code] = true; }
-    if (e.code === 'Enter' && !gameActive) { startGame(); }
+    if (e.code === 'Enter' && !gameActive) { startGame(window.innerWidth > 820 ? 'pc' : 'mobile'); } // Enterキーで自動判別
 });
 window.addEventListener('keyup', (e) => { 
     if (keys.hasOwnProperty(e.code)) { keys[e.code] = false; }
 });
 
-restartButton.addEventListener('click', startGame);
-scoreHistoryButton.addEventListener('click', displayScores);
-closeButton.addEventListener('click', () => { scoreHistoryModal.style.display = 'none'; });
-scoreHistoryModal.addEventListener('click', (e) => { if (e.target === scoreHistoryModal) { scoreHistoryModal.style.display = 'none'; } });
+restartButton.addEventListener('click', () => startGame(window.innerWidth > 820 ? 'pc' : 'mobile')); // リスタートも自動判別
 
-function handleStartScreenInteraction() {
-    if (!gameActive) {
-        startGame();
-    }
-}
-startScreen.addEventListener('click', handleStartScreenInteraction, {passive: false});
-startScreen.addEventListener('touchstart', handleStartScreenInteraction, {passive: false});
+// 新しいスタートボタンのイベントリスナー
+startPcButton.addEventListener('click', () => startGame('pc'));
+startPcButton.addEventListener('touchstart', (e) => { e.preventDefault(); startGame('pc'); });
+
+startMobileButton.addEventListener('click', () => startGame('mobile'));
+startMobileButton.addEventListener('touchstart', (e) => { e.preventDefault(); startGame('mobile'); });
 
 
+// モバイル操作ボタンのイベントリスナー (変更なし)
 jumpButton.addEventListener('touchstart', (e) => { e.preventDefault(); keys.Space = true; });
 jumpButton.addEventListener('touchend', (e) => { e.preventDefault(); keys.Space = false; });
 jumpButton.addEventListener('mousedown', (e) => { e.preventDefault(); keys.Space = true; });
@@ -152,39 +156,56 @@ attackButton.addEventListener('mouseup', (e) => { e.preventDefault(); keys.KeyA 
 
 
 // --- 画面サイズ変更時の処理 ---
+// この関数はCanvasの属性を変更しなくなります。CSSで対応済みのため。
+// 操作説明の表示/非表示のみ行います。
 function resizeGame() {
-    var gameContainer = document.getElementById('game-container');
-    var containerWidth = gameContainer.clientWidth;
-    scaleFactor = containerWidth / ORIGINAL_CANVAS_WIDTH;
-
-    canvas.width = ORIGINAL_CANVAS_WIDTH;
-    canvas.height = ORIGINAL_CANVAS_HEIGHT;
-
-    initialDraw();
-    
     if (window.innerWidth <= 820) {
         desktopControlsInfo.style.display = 'none';
         desktopJumpInfo.style.display = 'none';
         desktopAttackInfo.style.display = 'none';
         mobileControlsInfo.style.display = 'block';
-        startMessageEl.textContent = '画面をタップしてスタート';
+        // startMessageEl.textContent = '画面をタップしてスタート'; // このメッセージは使用しない
     } else {
         desktopControlsInfo.style.display = 'list-item';
         desktopJumpInfo.style.display = 'list-item';
         desktopAttackInfo.style.display = 'list-item';
         mobileControlsInfo.style.display = 'none';
-        startMessageEl.textContent = 'エンターキーでスタート';
+        // startMessageEl.textContent = 'エンターキーでスタート'; // このメッセージは使用しない
     }
 }
 
 window.addEventListener('resize', resizeGame);
 resizeGame(); // 初回ロード時にも実行
 
-function startGame() {
+// startGame関数をプレイモード選択に対応させる
+function startGame(mode) {
+    if (mode === 'pc') {
+        CURRENT_CANVAS_WIDTH = PC_CANVAS_WIDTH;
+        CURRENT_CANVAS_HEIGHT = PC_CANVAS_HEIGHT;
+        scaleFactor = 1; // PC版は物理パラメータを基準値そのまま使う
+    } else { // mobile
+        CURRENT_CANVAS_WIDTH = MOBILE_CANVAS_WIDTH;
+        CURRENT_CANVAS_HEIGHT = MOBILE_CANVAS_HEIGHT;
+        scaleFactor = MOBILE_CANVAS_WIDTH / PC_CANVAS_WIDTH; // スマホ版はPC版に対するスケール
+    }
+
+    // Canvasの内部解像度を動的に変更
+    canvas.width = CURRENT_CANVAS_WIDTH;
+    canvas.height = CURRENT_CANVAS_HEIGHT;
+
+    // 物理パラメータを現在のスケールファクターに基づいて設定
+    // Playerスピード、ジャンプ力、重力、弾速などをPC版基準のscaleFactorで調整
+    GRAVITY = 0.5 * scaleFactor;
+    JUMP_FORCE = 12 * scaleFactor;
+    PLAYER_SPEED = 5 * scaleFactor;
+    BULLET_SPEED = 10 * scaleFactor;
+    ENEMY_BULLET_SPEED = 5 * scaleFactor;
+
+
     gameActive = true;
     startScreen.style.display = 'none';
     gameOverScreen.style.display = 'none';
-    init();
+    init(); // ゲーム初期化
     if (!gameLoop.isRunning) {
         gameLoop();
     }
@@ -192,14 +213,25 @@ function startGame() {
 
 // --- ゲーム初期化 ---
 function init() {
+    // ground オブジェクトのy座標をここで設定（現在のCanvas高さに基づいて）
+    ground = { y: CURRENT_CANVAS_HEIGHT - 40, color: '#28A745' };
+
     player = createPlayer();
     enemies = []; playerBullets = []; enemyBullets = [];
     defenseItem = createItem('defense'); attackItem = createItem('attack'); recoveryItem = createItem('recovery');
     backgroundObjects = [];
     score = 0; lives = INITIAL_LIVES; timeLeft = GAME_DURATION; isGameOver = false;
-    worldOffsetX = player.x - (ORIGINAL_CANVAS_WIDTH / 2);
+    worldOffsetX = player.x - (CURRENT_CANVAS_WIDTH / 2); // worldOffsetXも現在のCanvas幅に基づいて計算
 
-    for (var i = 0; i < 30; i++) { backgroundObjects.push({ x: i * (Math.random() * 150 + 250), trunkWidth: 20, trunkHeight: 40, leafWidth: 80, leafHeight: 80 }); }
+    for (var i = 0; i < 30; i++) { 
+        backgroundObjects.push({ 
+            x: i * (Math.random() * 150 + 250), 
+            trunkWidth: 20, 
+            trunkHeight: 40, 
+            leafWidth: 80, 
+            leafHeight: 80 
+        }); 
+    }
     
     updateUI();
     uiContainer.style.display = 'block';
@@ -224,7 +256,7 @@ function spawnItem(item) {
     if (item.type === 'attack' && player.hasAttack) return;
     if (item.type === 'recovery' && lives > 2) return;
     item.isActive = true; item.lifeTimer = ITEM_LIFESPAN;
-    item.x = player.x + 100 + Math.random() * (ORIGINAL_CANVAS_WIDTH / 2);
+    item.x = player.x + 100 + Math.random() * (CURRENT_CANVAS_WIDTH / 2); // CURRENT_CANVAS_WIDTH 基準
     item.y = ground.y - item.height - (Math.random() * 80 + 50);
 }
 function spawnEnemy(type) { if (isGameOver) return; var currentEnemies = enemies.filter(e => e.type === type); var maxEnemies = type === 'ground' ? MAX_GROUND_ENEMIES : MAX_FLYING_ENEMIES; if (currentEnemies.length < maxEnemies) { enemies.push(createEnemy(type)); } }
@@ -270,13 +302,17 @@ function displayScores() {
 
 // --- 描画関数 ---
 function draw() {
+    // Canvasの実際の解像度が CURRENT_CANVAS_WIDTH/HEIGHT に設定されているため、
+    // ctx.clearRect はそのままの幅と高さでOK
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
     
-    ctx.translate(-worldOffsetX, 0);
-    ctx.scale(scaleFactor, scaleFactor); 
+    // スケールはもうctx.scaleでは適用せず、物理パラメータ調整のためにのみ使う
+    // 全て CURRENT_CANVAS_WIDTH/HEIGHT 基準で直接描画
+    ctx.translate(-worldOffsetX, 0); // worldOffsetXは CURRENT_CANVAS_WIDTH基準のワールド座標
 
     backgroundObjects.forEach(obj => {
+        // オブジェクトのX座標はworldOffsetXでオフセットされ、Y座標はCURRENT_CANVAS_HEIGHT基準でそのまま
         ctx.fillStyle = '#8B4513'; ctx.fillRect(obj.x, ground.y - obj.trunkHeight, obj.trunkWidth, obj.trunkHeight);
         ctx.fillStyle = '#228B22'; ctx.beginPath();
         var treeTopX = obj.x + (obj.trunkWidth / 2); var treeTopY = ground.y - obj.trunkHeight - obj.leafHeight;
@@ -284,14 +320,16 @@ function draw() {
     });
     
     ctx.fillStyle = ground.color;
-    ctx.fillRect(0, ground.y, ORIGINAL_CANVAS_WIDTH * 100, ORIGINAL_CANVAS_HEIGHT - ground.y);
+    // 地面は常に CURRENT_CANVAS_HEIGHT を基準に描画
+    ctx.fillRect(0, ground.y, CURRENT_CANVAS_WIDTH * 100, CURRENT_CANVAS_HEIGHT - ground.y);
     
-    ctx.fillStyle = '#C2B280'; ctx.fillRect(-10, 0, 10, ORIGINAL_CANVAS_HEIGHT);
+    ctx.fillStyle = '#C2B280'; ctx.fillRect(-10, 0, 10, CURRENT_CANVAS_HEIGHT);
 
     var shouldDrawPlayer = !(player.isInvincible && Math.floor(player.invincibilityTimer / 10) % 2 === 0);
     if (shouldDrawPlayer) {
         ctx.fillStyle = player.color; ctx.beginPath(); ctx.arc(player.x + player.radius, player.y + player.radius, player.radius, 0, Math.PI * 2); ctx.fill();
-        if (player.hasShield) { ctx.strokeStyle = 'black'; ctx.lineWidth = 3 / scaleFactor; ctx.stroke(); }
+        // シールドの線幅は、CURRENT_CANVAS_WIDTHに対するPC版の比率で調整
+        if (player.hasShield) { ctx.strokeStyle = 'black'; ctx.lineWidth = 3 * (PC_CANVAS_WIDTH / CURRENT_CANVAS_WIDTH); ctx.stroke(); }
         if (player.isHealing && Math.floor(player.healingTimer / 10) % 2 !== 0) { ctx.fillStyle = '#32CD32'; ctx.beginPath(); ctx.arc(player.x + player.radius, player.y + player.radius, 6, 0, Math.PI * 2); ctx.fill(); }
         if (player.hasAttack) { ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(player.x + player.radius, player.y + player.radius, 5, 0, Math.PI * 2); ctx.fill(); }
     }
@@ -335,7 +373,7 @@ function update() {
     if (player.isHealing) { if (--player.healingTimer <= 0) player.isHealing = false; }
 
     [defenseItem, attackItem, recoveryItem].forEach(item => { if (item.isActive) { if (--item.lifeTimer <= 0) { item.isActive = false; var nextTimer = setTimeout(() => scheduleNextItem(item), 5000 + Math.random() * 5000); if (item.type === 'defense') defenseItemSpawnTimer = nextTimer; else if (item.type === 'attack') attackItemSpawnTimer = nextTimer; else recoveryItemSpawnTimer = nextTimer; }
-        if (player.x < item.x + item.width && player.x + player.width > item.x && player.y < item.y + item.height && player.y + player.height > item.y) {
+        if (player.x < item.x + item.width && player.x + player.width > item.x && player.y < item.y + item.height && player.y + item.height > item.y) {
             if (item.type === 'defense') player.hasShield = true;
             if (item.type === 'attack') player.hasAttack = true;
             if (item.type === 'recovery') { if(lives < INITIAL_LIVES) lives++; player.isHealing = true; player.healingTimer = HEALING_EFFECT_DURATION; updateUI(); }
@@ -345,8 +383,8 @@ function update() {
 
     if (keys.KeyA && player.hasAttack) { createPlayerBullet(); keys.KeyA = false; }
     
-    for (var i = playerBullets.length - 1; i >= 0; i--) { playerBullets[i].x += BULLET_SPEED; if (playerBullets[i].x > worldOffsetX + ORIGINAL_CANVAS_WIDTH) playerBullets.splice(i, 1); }
-    for (var i = enemyBullets.length - 1; i >= 0; i--) { var bullet = enemyBullets[i]; bullet.x += bullet.dx; bullet.y += bullet.dy; if (bullet.x < worldOffsetX - bullet.radius || bullet.x > worldOffsetX + ORIGINAL_CANVAS_WIDTH + bullet.radius || bullet.y < -bullet.radius || bullet.y > ORIGINAL_CANVAS_HEIGHT + bullet.radius) { enemyBullets.splice(i, 1); } }
+    for (var i = playerBullets.length - 1; i >= 0; i--) { playerBullets[i].x += BULLET_SPEED; if (playerBullets[i].x > worldOffsetX + CURRENT_CANVAS_WIDTH) playerBullets.splice(i, 1); }
+    for (var i = enemyBullets.length - 1; i >= 0; i--) { var bullet = enemyBullets[i]; bullet.x += bullet.dx; bullet.y += bullet.dy; if (bullet.x < worldOffsetX - bullet.radius || bullet.x > worldOffsetX + CURRENT_CANVAS_WIDTH + bullet.radius || bullet.y < -bullet.radius || bullet.y > CURRENT_CANVAS_HEIGHT + bullet.radius) { enemyBullets.splice(i, 1); } }
 
     if (player.onGround) { if (keys.ArrowRight) player.dx = PLAYER_SPEED; else if (keys.ArrowLeft) player.dx = -PLAYER_SPEED; else player.dx = 0; } else { if (keys.ArrowRight) player.dx = PLAYER_SPEED; else if (keys.ArrowLeft) player.dx = -PLAYER_SPEED; }
     if (keys.Space && player.onGround) { player.dy = -JUMP_FORCE; player.onGround = false; }
@@ -354,10 +392,10 @@ function update() {
     if (player.x < 0) player.x = 0;
     if (player.y + player.height >= ground.y) { player.y = ground.y - player.height; player.dy = 0; player.onGround = true; }
     
-    var deadZoneLeft = worldOffsetX + ORIGINAL_CANVAS_WIDTH * 0.4;
-    var deadZoneRight = worldOffsetX + ORIGINAL_CANVAS_WIDTH * 0.6;
-    if (player.x < deadZoneLeft) worldOffsetX = player.x - ORIGINAL_CANVAS_WIDTH * 0.4;
-    else if (player.x > deadZoneRight) worldOffsetX = player.x - ORIGINAL_CANVAS_WIDTH * 0.6;
+    var deadZoneLeft = worldOffsetX + CURRENT_CANVAS_WIDTH * 0.4; // CURRENT_CANVAS_WIDTH 基準
+    var deadZoneRight = worldOffsetX + CURRENT_CANVAS_WIDTH * 0.6; // CURRENT_CANVAS_WIDTH 基準
+    if (player.x < deadZoneLeft) worldOffsetX = player.x - CURRENT_CANVAS_WIDTH * 0.4;
+    else if (player.x > deadZoneRight) worldOffsetX = player.x - CURRENT_CANVAS_WIDTH * 0.6;
     if (worldOffsetX < 0) worldOffsetX = 0;
 
     for (var i = playerBullets.length - 1; i >= 0; i--) { for (var j = enemies.length - 1; j >= 0; j--) { var bullet = playerBullets[i]; var enemy = enemies[j]; if (bullet && enemy && bullet.x < enemy.x + enemy.width && bullet.x + bullet.width > enemy.x && bullet.y < enemy.y + enemy.height && bullet.y + bullet.height > enemy.y) { score += (enemy.type === 'ground') ? 1 : 2; enemies.splice(j, 1); playerBullets.splice(i, 1); updateUI(); break; } } }
@@ -365,14 +403,14 @@ function update() {
     
     enemies.forEach((enemy, index) => {
         enemy.x -= enemy.speed;
-        if (enemy.type === 'flying') { enemy.shootCooldown--; if (enemy.shootCooldown <= 0 && player.x < enemy.x && Math.abs(player.x - enemy.x) < ORIGINAL_CANVAS_WIDTH * 0.8) { createEnemyBullet(enemy); enemy.shootCooldown = 120; } }
+        if (enemy.type === 'flying') { enemy.shootCooldown--; if (enemy.shootCooldown <= 0 && player.x < enemy.x && Math.abs(player.x - enemy.x) < CURRENT_CANVAS_WIDTH * 0.8) { createEnemyBullet(enemy); enemy.shootCooldown = 120; } }
         
         if ( player.x < enemy.x + enemy.width && player.x + player.width > enemy.x && player.y < enemy.y + enemy.height && player.y + player.height > enemy.y ) {
             if (player.dy > 0 && (player.y + player.height) < (enemy.y + 20)) {
                 score += (enemy.type === 'ground') ? 1 : 2; enemies.splice(index, 1); player.dy = -6; updateUI();
             } else { handlePlayerDamage(); }
         }
-        if (enemy.x + enemy.width < worldOffsetX - ORIGINAL_CANVAS_WIDTH) { enemies.splice(index, 1); }
+        if (enemy.x + enemy.width < worldOffsetX - CURRENT_CANVAS_WIDTH) { enemies.splice(index, 1); }
     });
 }
 
@@ -388,13 +426,19 @@ function gameLoop() {
 }
 gameLoop.isRunning = false;
 
+// initialDraw関数も CURRENT_CANVAS_WIDTH/HEIGHT 基準で描画
 function initialDraw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // CURRENT_CANVAS_WIDTHとHEIGHTは、startGame()が呼ばれるまで初期値が設定されていない可能性があるため、
+    // ここではPC_CANVAS_WIDTH/HEIGHTを使用するか、resizeGame()から呼び出す前に設定する
+    // ただし、今回はstartScreenが表示されている間はゲームCanvas自体が完全に覆われているため、
+    // initialDrawの厳密な見た目はそこまで重要ではない。
+    // startGame()が呼ばれてから初めてcanvas.width/heightが設定されるため、それまではCanvasは空。
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // これは常に800x400の内部キャンバスをクリア
     ctx.save();
-    ctx.translate(-worldOffsetX, 0);
-    ctx.scale(scaleFactor, scaleFactor);
-    ctx.fillStyle = ground.color;
-    ctx.fillRect(0, ground.y, ORIGINAL_CANVAS_WIDTH, ORIGINAL_CANVAS_HEIGHT - ground.y);
+    // 描画は、ゲームモード選択後に設定されるCURRENT_CANVAS_WIDTH/HEIGHTに従うので、
+    // ここでのctx.translateとctx.scaleは不要（または、PC_CANVAS_WIDTH/HEIGHTに合わせておく）
+    // とりあえず削除し、startGame()が呼ばれた後に描画が開始されるようにする
     ctx.restore();
 }
-initialDraw();
+// initialDraw()はresizeGame()から呼ばれるので、ここでの直接呼び出しは削除
+// resizeGame() はページロード時に一度呼ばれます。
