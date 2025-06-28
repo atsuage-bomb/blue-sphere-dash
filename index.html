@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blue Sphere Dash</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', Meiryo, sans-serif;
+            padding: 20px 0;
+        }
+        .page-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+        }
+        #game-container {
+            position: relative;
+            border: 2px solid #333;
+            overflow: hidden;
+            width: 100%; /* フル幅に調整 */
+            max-width: 800px; /* PC表示時の最大幅を維持 */
+            height: auto; /* 高さを自動調整 */
+            aspect-ratio: 2 / 1; /* 幅:高さ = 2:1 の比率を維持 */
+        }
+        #game-canvas {
+            display: block;
+            background-color: #87CEEB;
+            width: 100%; /* コンテナに合わせて幅を調整 */
+            height: 100%; /* コンテナに合わせて高さを調整 */
+        }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 10;
+        }
+        .overlay h2 {
+            font-size: 48px;
+            margin: 0;
+            text-shadow: 3px 3px 6px #000;
+        }
+        .overlay p {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        #start-screen {
+            display: flex;
+        }
+        #game-over-screen {
+            display: none;
+        }
+        #ui-container {
+            display: none;
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px #000;
+        }
+        .game-button {
+            padding: 15px 30px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            background-color: #fff;
+            border: 2px solid #333;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        .game-button:hover {
+            background-color: #ddd;
+        }
+        .game-button:active {
+            transform: scale(0.95);
+        }
+
+        #game-description {
+            width: 800px;
+            background-color: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #333;
+        }
+        #game-description h3 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+            font-size: 22px;
+        }
+        .description-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .description-section h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #007BFF;
+            border-left: 5px solid #007BFF;
+            padding-left: 10px;
+        }
+        .description-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .description-section li {
+            margin-bottom: 8px;
+        }
+        .key {
+            display: inline-block;
+            padding: 2px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            font-weight: bold;
+        }
+        
+        #button-container {
+            display: flex;
+            justify-content: center;
+            width: 800px;
+        }
+        #score-history-button {
+            font-size: 18px;
+            padding: 10px 25px;
+        }
+        .modal-content {
+            position: relative;
+            background-color: #fff;
+            color: #333;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            text-align: left;
+        }
+        .modal-content h2 {
+            text-align: center;
+            margin-top: 0;
+        }
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #score-list {
+            list-style-type: decimal;
+            padding-left: 30px;
+        }
+        #score-list li {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        #score-list li:last-child {
+            border-bottom: none;
+        }
+        #score-list small {
+            color: #777;
+            margin-left: 10px;
+        }
+
+        /* --- モバイル対応スタイル --- */
+        /* モバイル操作ボタン用コンテナ */
+        #mobile-controls {
+            display: none; /* デフォルトで非表示 */
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap; /* ボタンが多すぎるときに折り返す */
+        }
+        /* モバイル操作ボタン */
+        .mobile-button {
+            padding: 15px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            background-color: #fff;
+            border: 2px solid #333;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            user-select: none; /* テキスト選択を無効化 */
+            -webkit-tap-highlight-color: rgba(0,0,0,0); /* タップ時のハイライトを無効化 */
+        }
+        .mobile-button:active {
+            background-color: #ddd;
+            transform: scale(0.95);
+        }
+
+        /* 画面幅が一定以下の場合にモバイルコントロールを表示 */
+        @media (max-width: 820px) { /* game-containerのmax-width + padding (20px*2) */
+            body {
+                padding: 10px; /* スマートフォンでのパディングを調整 */
+            }
+            .page-wrapper {
+                gap: 15px; /* スマートフォンでの要素間のスペースを調整 */
+            }
+            #game-description {
+                width: 100%; /* スマートフォンでの幅を調整 */
+                padding: 15px;
+            }
+            .description-grid {
+                grid-template-columns: 1fr; /* スマートフォンでは1列表示 */
+            }
+            #button-container {
+                width: 100%; /* スマートフォンでの幅を調整 */
+            }
+            #mobile-controls {
+                display: flex; /* モバイル表示時にボタンを表示 */
+            }
+            #start-screen p {
+                font-size: 20px; /* スタート画面のテキストサイズを調整 */
+            }
+            #start-screen h2 {
+                font-size: 40px; /* スタート画面のタイトルサイズを調整 */
+            }
+            .overlay p {
+                font-size: 20px; /* ゲームオーバー画面のテキストサイズを調整 */
+            }
+            .overlay h2 {
+                font-size: 40px; /* ゲームオーバー画面のタイトルサイズを調整 */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-wrapper">
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="start-screen" class="overlay">
+            <h2>Blue Sphere Dash</h2>
+            <p id="start-message">画面をタップしてスタート</p>
+        </div>
+        <div id="ui-container">
+            <span id="score">スコア: 0</span><br>
+            <span id="lives">ライフ: 3/3</span><br>
+            <span id="timer">残り時間: 60</span>
+        </div>
+        <div id="game-over-screen" class="overlay">
+            <h2 id="game-over-title">ゲームオーバー</h2>
+            <p id="final-score">最終スコア: 0</p>
+            <button id="restart-button" class="game-button">リスタート</button>
+        </div>
+    </div>
+
+    <div id="mobile-controls">
+        <button id="jump-button" class="mobile-button">ジャンプ</button>
+        <button id="left-button" class="mobile-button">← 移動</button>
+        <button id="right-button" class="mobile-button">→ 移動</button>
+        <button id="attack-button" class="mobile-button">攻撃</button>
+    </div>
+
+    <div id="game-description">
+        <h3>ゲームの説明</h3>
+        <div class="description-grid">
+            <div class="description-section">
+                <h4>操作方法</h4>
+                <ul>
+                    <li id="desktop-controls"><span class="key">←</span> <span class="key">→</span> : 左右に移動</li>
+                    <li id="desktop-jump"><span class="key">スペース</span> : ジャンプ</li>
+                    <li id="desktop-attack"><span class="key">A</span> : 弾を発射 (黄色アイテム取得後)</li>
+                    <li id="mobile-controls-info" style="display: none;">画面下のボタンで操作</li>
+                </ul>
+            </div>
+            <div class="description-section">
+                <h4>敵キャラクター</h4>
+                <ul>
+                    <li><strong>赤い四角 (地上)</strong>: 踏むか弾で倒せる。 [スコア: 1点]</li>
+                    <li><strong>黒い四角 (空中)</strong>: 赤い弾で攻撃してくる。 [スコア: 2点]</li>
+                </ul>
+            </div>
+            <div class="description-section" style="grid-column: 1 / -1;">
+                <h4>アイテム紹介 (三角形)</h4>
+                <ul>
+                    <li><strong>紫 (耐久UP)</strong>: 一度だけダメージを防ぐシールドが付く。</li>
+                    <li><strong>黄 (攻撃UP)</strong>: ダメージを受けるまで何度でも弾が撃てるようになる。</li>
+                    <li><strong>緑 (回復)</strong>: ライフが2以下の時に出現し、ライフを1回復する。</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div id="button-container">
+        <button id="score-history-button" class="game-button">スコア履歴</button>
+    </div>
+</div>
+
+<div id="score-history-modal" class="overlay" style="display: none;">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>スコア履歴</h2>
+        <ol id="score-list"></ol>
+    </div>
+</div>
+
+<script src="script.js"></script> </body>
+</html>
