@@ -1,3 +1,11 @@
+// script.js (このコードを上書きしてください)
+
+console.log("script.jsが読み込まれ、実行されています！"); // この行を追加
+
+// --- 初期設定 ---
+const canvas = document.getElementById('game-canvas');
+// ... (以下、元の script.js の内容を全て貼り付け) ...
+
 // script.js
 // --- 初期設定 ---
 const canvas = document.getElementById('game-canvas');
